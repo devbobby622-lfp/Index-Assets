@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Rec Room Revival"
+version = "1.0.0"
+id = "artifacts/rec-revival"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23231
+
+[services.development]
+run = "pnpm --filter @workspace/rec-revival run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rec-revival", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/rec-revival/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23231"
+BASE_PATH = "/"
