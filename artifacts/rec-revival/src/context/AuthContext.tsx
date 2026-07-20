@@ -8,13 +8,16 @@ export interface User {
   password: string;
   email: string;
   bio: string;
-  profileIcon: string;      // emoji or '' for initials
+  profileIcon: string;      // legacy – kept for compat
+  profileImage: string;     // data URL or '' for default avatar
+  following: string[];      // list of user IDs this user follows
+  lastSeen: number;         // unix ms; updated by heartbeat while online
   has2FA: boolean;
   twoFASeed: string;
   backupCodes: string[];
   isAdmin: boolean;
   role: UserRole;
-  bannedUntil: number | null; // unix ms timestamp; -1 = permanent; null = not banned
+  bannedUntil: number | null;
 }
 
 interface AuthState {
@@ -35,7 +38,7 @@ interface AuthContextType {
   verify2FA: (code: string) => { success: boolean; error?: string };
   useBackupCode: (code: string) => { success: boolean; error?: string };
   signOut: () => void;
-  updateUser: (updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon'>>) => void;
+  updateUser: (updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage'>>) => void;
   deleteAccount: () => void;
   enable2FA: () => { seed: string; backupCodes: string[] };
   confirm2FAEnable: (seed: string, backupCodes: string[], code: string) => { success: boolean; error?: string };
@@ -43,15 +46,22 @@ interface AuthContextType {
   claimAdmin: (code: string) => boolean;
   getTOTPCode: (seed: string) => string;
   getEmailCode: (userId: string) => string;
+  // Follow
+  subscribe: (targetId: string) => void;
+  unsubscribe: (targetId: string) => void;
+  isFollowing: (targetId: string) => boolean;
+  getFollowerCount: (targetId: string) => number;
   // Admin ops
   setUserRole: (userId: string, role: UserRole) => void;
-  banUser: (userId: string, durationMs: number | null) => void;  // null = permanent
+  banUser: (userId: string, durationMs: number | null) => void;
   unbanUser: (userId: string) => void;
   deleteUser: (userId: string) => void;
 }
 
-const STORAGE_KEY = 'rr_auth_v3';
+const STORAGE_KEY = 'rr_auth_v4';
 const ADMIN_CODE = 'REVIVAL2020';
+const HEARTBEAT_INTERVAL = 20_000; // 20 s
+export const ONLINE_THRESHOLD = 60_000; // 60 s → considered online
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -63,6 +73,9 @@ function migrateUser(u: Partial<User>): User {
     email: u.email ?? '',
     bio: u.bio ?? '',
     profileIcon: u.profileIcon ?? '',
+    profileImage: u.profileImage ?? '',
+    following: u.following ?? [],
+    lastSeen: u.lastSeen ?? 0,
     has2FA: u.has2FA ?? false,
     twoFASeed: u.twoFASeed ?? '',
     backupCodes: u.backupCodes ?? [],
@@ -74,23 +87,15 @@ function migrateUser(u: Partial<User>): User {
 
 function load(): AuthState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        ...parsed,
-        users: (parsed.users ?? []).map(migrateUser),
-      };
-    }
-    // Try migrating from old key
-    const old = localStorage.getItem('rr_auth_v2');
-    if (old) {
-      const parsed = JSON.parse(old);
-      return {
-        ...parsed,
-        users: (parsed.users ?? []).map(migrateUser),
-      };
-    }
+    // Try v4
+    const v4 = localStorage.getItem(STORAGE_KEY);
+    if (v4) return { ...JSON.parse(v4), users: (JSON.parse(v4).users ?? []).map(migrateUser) };
+    // Migrate from v3
+    const v3 = localStorage.getItem('rr_auth_v3');
+    if (v3) return { ...JSON.parse(v3), users: (JSON.parse(v3).users ?? []).map(migrateUser) };
+    // v2
+    const v2 = localStorage.getItem('rr_auth_v2');
+    if (v2) return { ...JSON.parse(v2), users: (JSON.parse(v2).users ?? []).map(migrateUser) };
   } catch {}
   return { users: [], currentUserId: null, pending2FAUserId: null };
 }
@@ -140,9 +145,30 @@ function isBanned(user: User): boolean {
   return Date.now() < user.bannedUntil;
 }
 
+export function isOnline(user: User): boolean {
+  return Date.now() - user.lastSeen < ONLINE_THRESHOLD;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(load);
   useEffect(() => { save(state); }, [state]);
+
+  // ── Online presence heartbeat ──────────────────────────────────────────────
+  useEffect(() => {
+    const tick = () => {
+      setState(s => {
+        if (!s.currentUserId) return s;
+        const now = Date.now();
+        return {
+          ...s,
+          users: s.users.map(u => u.id === s.currentUserId ? { ...u, lastSeen: now } : u),
+        };
+      });
+    };
+    tick(); // immediate
+    const id = setInterval(tick, HEARTBEAT_INTERVAL);
+    return () => clearInterval(id);
+  }, []); // runs once; setState reads currentUserId via functional update
 
   const currentUser = state.users.find(u => u.id === state.currentUserId) ?? null;
   const pending2FAUser = state.users.find(u => u.id === state.pending2FAUserId) ?? null;
@@ -163,6 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim(),
       bio: '',
       profileIcon: '',
+      profileImage: '',
+      following: [],
+      lastSeen: Date.now(),
       has2FA: false,
       twoFASeed: '',
       backupCodes: [],
@@ -222,7 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, currentUserId: null, pending2FAUserId: null }));
   }, []);
 
-  const updateUser = useCallback((updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon'>>) => {
+  const updateUser = useCallback((updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage'>>) => {
     setState(s => ({
       ...s,
       users: s.users.map(u => u.id === s.currentUserId ? { ...u, ...updates } : u),
@@ -264,6 +293,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  // ── Follow / subscribe ─────────────────────────────────────────────────────
+  const subscribe = useCallback((targetId: string) => {
+    setState(s => ({
+      ...s,
+      users: s.users.map(u => u.id === s.currentUserId
+        ? { ...u, following: u.following.includes(targetId) ? u.following : [...u.following, targetId] }
+        : u),
+    }));
+  }, []);
+
+  const unsubscribe = useCallback((targetId: string) => {
+    setState(s => ({
+      ...s,
+      users: s.users.map(u => u.id === s.currentUserId
+        ? { ...u, following: u.following.filter(id => id !== targetId) }
+        : u),
+    }));
+  }, []);
+
+  const isFollowing = useCallback((targetId: string) => {
+    return currentUser?.following.includes(targetId) ?? false;
+  }, [currentUser]);
+
+  const getFollowerCount = useCallback((targetId: string) => {
+    return state.users.filter(u => u.following.includes(targetId)).length;
+  }, [state.users]);
+
+  // ── Admin ──────────────────────────────────────────────────────────────────
   const setUserRole = useCallback((userId: string, role: UserRole) => {
     setState(s => ({
       ...s,
@@ -304,6 +361,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateUser, deleteAccount,
       enable2FA, confirm2FAEnable, disable2FA, claimAdmin,
       getTOTPCode, getEmailCode,
+      subscribe, unsubscribe, isFollowing, getFollowerCount,
       setUserRole, banUser, unbanUser, deleteUser,
     }}>
       {children}

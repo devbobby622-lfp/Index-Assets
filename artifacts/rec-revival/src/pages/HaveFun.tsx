@@ -2,9 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { usePosts, Post } from '@/context/PostsContext';
 import { Link } from 'wouter';
+import Avatar from '@/components/Avatar';
 import {
   PenLine, Megaphone, Users, Search, ImagePlus, X, Trash2,
-  ShieldCheck, Shield, Crown
+  ShieldCheck, Shield, Crown, UserPlus, UserCheck
 } from 'lucide-react';
 
 type Tab = 'posts' | 'announcements' | 'players';
@@ -20,7 +21,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ── Horizontal nametag row ────────────────────────────────────────────────────
+// ── Nametag pills ─────────────────────────────────────────────────────────────
 const ROLE_META: Record<UserRole, { label: string; classes: string; icon?: React.ReactNode } | null> = {
   user: null,
   mod: { label: 'Mod', classes: 'text-blue-400 bg-blue-500/10 border-blue-500/30', icon: <Shield className="w-2.5 h-2.5" /> },
@@ -52,6 +53,9 @@ function Nametags({ role, isAdmin, has2FA }: { role: UserRole; isAdmin: boolean;
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 function PostCard({ post, canDelete, onDelete }: { post: Post; canDelete: boolean; onDelete: () => void }) {
+  const { users } = useAuth();
+  const author = users.find(u => u.id === post.authorId);
+
   return (
     <article className="bg-card border border-border rounded-3xl overflow-hidden hover:border-primary/25 transition-colors">
       {post.imageUrl && (
@@ -63,11 +67,10 @@ function PostCard({ post, canDelete, onDelete }: { post: Post; canDelete: boolea
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xl flex-shrink-0 font-black">
-              {post.authorIcon || (
-                <span className="text-primary font-black text-sm">{post.authorUsername[0]?.toUpperCase()}</span>
-              )}
-            </span>
+            {author
+              ? <Avatar user={author} size="sm" showOnline />
+              : <div className="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0" />
+            }
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-black text-sm">{post.authorUsername}</span>
@@ -111,14 +114,13 @@ function ComposeForm({
 
   const reset = () => { setTitle(''); setContent(''); setImageUrl(''); setShowImage(false); setOpen(false); };
 
-  const submit = useCallback((e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = content.trim();
     if (!trimmed) return;
     onPost(title.trim(), trimmed, imageUrl.trim());
     reset();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, content, imageUrl, onPost]);
+  };
 
   if (!open) {
     return (
@@ -133,48 +135,25 @@ function ComposeForm({
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="bg-card border border-primary/30 rounded-3xl p-5 mb-4"
-      style={{ boxShadow: '0 0 0 1px hsl(var(--primary)/0.1), 0 8px 32px rgba(0,0,0,0.2)' }}
-    >
+    <form onSubmit={submit} className="bg-card border border-primary/30 rounded-3xl p-5 mb-4" style={{ boxShadow: '0 0 0 1px hsl(var(--primary)/0.1), 0 8px 32px rgba(0,0,0,0.2)' }}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-black text-sm">{isAnnouncement ? 'New Announcement' : 'New Post'}</h3>
         <button type="button" onClick={reset} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
       </div>
-
-      <input
-        type="text"
-        value={title}
-        onChange={e => setTitle(e.target.value)}
-        placeholder="Title (optional)"
-        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm font-black outline-none focus:border-primary transition-colors mb-3"
-      />
-
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder={isAnnouncement ? 'Write your announcement for the community…' : 'What\'s on your mind? Share updates, rooms, or just say hi!'}
-        rows={5}
-        required
-        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors resize-none mb-3"
-      />
+      <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Title (optional)"
+        className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm font-black outline-none focus:border-primary transition-colors mb-3" />
+      <textarea value={content} onChange={e => setContent(e.target.value)} placeholder={placeholder} rows={5} required
+        className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors resize-none mb-3" />
 
       {showImage && (
         <div className="relative mb-3">
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={e => setImageUrl(e.target.value)}
-            placeholder="Paste image URL…"
-            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors pr-10"
-          />
+          <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Paste image URL…"
+            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors pr-10" />
           <button type="button" onClick={() => { setShowImage(false); setImageUrl(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
-
       {imageUrl && (
         <div className="mb-3 rounded-2xl overflow-hidden border border-border aspect-video bg-muted">
           <img src={imageUrl} alt="preview" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
@@ -182,23 +161,12 @@ function ComposeForm({
       )}
 
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setShowImage(v => !v)}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-        >
+        <button type="button" onClick={() => setShowImage(v => !v)} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors">
           <ImagePlus className="w-4 h-4" /> {showImage ? 'Remove image' : 'Add image'}
         </button>
         <div className="flex gap-2">
-          <button type="button" onClick={reset} className="px-4 py-2 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors">
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!content.trim()}
-            className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-black hover:opacity-90 disabled:opacity-50 transition-opacity"
-            style={{ boxShadow: '0 4px 12px hsl(var(--primary)/0.3)' }}
-          >
+          <button type="button" onClick={reset} className="px-4 py-2 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors">Cancel</button>
+          <button type="submit" disabled={!content.trim()} className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-black hover:opacity-90 disabled:opacity-50 transition-opacity" style={{ boxShadow: '0 4px 12px hsl(var(--primary)/0.3)' }}>
             {buttonLabel}
           </button>
         </div>
@@ -209,15 +177,48 @@ function ComposeForm({
 
 // ── Player card ───────────────────────────────────────────────────────────────
 function PlayerCard({ user }: { user: ReturnType<typeof useAuth>['users'][number] }) {
+  const { currentUser, subscribe, unsubscribe, isFollowing, getFollowerCount } = useAuth();
+  const following = isFollowing(user.id);
+  const followerCount = getFollowerCount(user.id);
+  const isSelf = currentUser?.id === user.id;
+
+  const handleFollow = () => {
+    if (!currentUser || isSelf) return;
+    if (following) unsubscribe(user.id);
+    else subscribe(user.id);
+  };
+
   return (
     <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4 hover:border-primary/30 transition-colors">
-      <span className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center text-2xl flex-shrink-0">
-        {user.profileIcon || <span className="text-primary font-black text-lg">{user.username[0]?.toUpperCase()}</span>}
-      </span>
+      <Avatar user={user} size="md" showOnline />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap mb-1">
-          <span className="font-black text-sm">{user.username}</span>
-          <Nametags role={user.role} isAdmin={user.isAdmin} has2FA={user.has2FA} />
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              <span className="font-black text-sm">{user.username}</span>
+              <Nametags role={user.role} isAdmin={user.isAdmin} has2FA={user.has2FA} />
+            </div>
+            <div className="flex items-center gap-3 mb-1.5">
+              <span className="text-xs text-muted-foreground">
+                <span className="font-bold text-foreground">{followerCount}</span> subscriber{followerCount !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+          {currentUser && !isSelf && (
+            <button
+              onClick={handleFollow}
+              className={`flex items-center gap-1.5 text-xs font-black px-3 py-1.5 rounded-full border transition-all flex-shrink-0 ${
+                following
+                  ? 'bg-primary/10 border-primary/30 text-primary hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
+              }`}
+            >
+              {following
+                ? <><UserCheck className="w-3 h-3" /> Following</>
+                : <><UserPlus className="w-3 h-3" /> Subscribe</>
+              }
+            </button>
+          )}
         </div>
         {user.bio
           ? <p className="text-xs text-muted-foreground leading-relaxed">{user.bio}</p>
@@ -249,7 +250,7 @@ export default function HaveFun() {
     createPost({
       authorId: currentUser.id,
       authorUsername: currentUser.username,
-      authorIcon: currentUser.profileIcon,
+      authorIcon: currentUser.profileImage || currentUser.profileIcon,
       authorRole: currentUser.role,
       authorIsAdmin: currentUser.isAdmin,
       title,
@@ -278,9 +279,7 @@ export default function HaveFun() {
           <h1 className="text-5xl font-black bloom-text mb-3">
             Have <span className="text-primary">Fun</span>
           </h1>
-          <p className="text-muted-foreground text-lg">
-            Share posts, browse announcements, and find players on the revival.
-          </p>
+          <p className="text-muted-foreground text-lg">Share posts, browse announcements, and find players on the revival.</p>
           {!currentUser && (
             <div className="mt-6 flex items-center justify-center gap-3">
               <Link href="/sign-in" className="bg-primary text-white px-6 py-2.5 rounded-full font-bold text-sm hover:opacity-90" style={{ boxShadow: '0 8px 24px hsl(var(--primary)/0.3)' }}>
@@ -298,53 +297,40 @@ export default function HaveFun() {
         {/* Tabs */}
         <div className="flex gap-1 p-1 bg-card border border-border rounded-2xl mb-7 w-fit">
           {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tab === t.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
-              }`}
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               style={tab === t.id ? { boxShadow: '0 4px 12px hsl(var(--primary)/0.25)' } : {}}
             >
               {t.icon} {t.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>
-                {t.count}
-              </span>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>{t.count}</span>
             </button>
           ))}
         </div>
 
-        {/* ── Posts ── */}
+        {/* Posts */}
         {tab === 'posts' && (
           <>
             {currentUser && (
-              <ComposeForm
-                isAnnouncement={false}
-                placeholder="Share something with the community…"
-                buttonLabel="Post"
-                onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, false)}
-              />
+              <ComposeForm isAnnouncement={false} placeholder="Share something with the community…" buttonLabel="Post"
+                onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, false)} />
             )}
-            {regularPosts.length === 0
-              ? (
-                <div className="text-center py-16">
-                  <PenLine className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-bold">No posts yet.</p>
-                  <p className="text-sm text-muted-foreground/60">Be the first to share something!</p>
-                </div>
-              )
-              : (
-                <div className="space-y-4">
-                  {regularPosts.map(post => (
-                    <PostCard key={post.id} post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
-                  ))}
-                </div>
-              )
-            }
+            {regularPosts.length === 0 ? (
+              <div className="text-center py-16">
+                <PenLine className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-bold">No posts yet.</p>
+                <p className="text-sm text-muted-foreground/60">Be the first to share something!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {regularPosts.map(post => (
+                  <PostCard key={post.id} post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+                ))}
+              </div>
+            )}
           </>
         )}
 
-        {/* ── Announcements ── */}
+        {/* Announcements */}
         {tab === 'announcements' && (
           <>
             {currentUser?.isAdmin && (
@@ -353,49 +339,37 @@ export default function HaveFun() {
                   <ShieldCheck className="w-4 h-4 text-primary" />
                   <span className="text-xs font-bold text-primary">Admin — only you can post here</span>
                 </div>
-                <ComposeForm
-                  isAnnouncement
-                  placeholder="Write an announcement for the community…"
-                  buttonLabel="Post Announcement"
-                  onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, true)}
-                />
+                <ComposeForm isAnnouncement placeholder="Write an announcement for the community…" buttonLabel="Post Announcement"
+                  onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, true)} />
               </>
             )}
-            {announcements.length === 0
-              ? (
-                <div className="text-center py-16">
-                  <Megaphone className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-bold">No announcements yet.</p>
-                </div>
-              )
-              : (
-                <div className="space-y-5">
-                  {announcements.map(post => (
-                    <div key={post.id} className="relative pt-3">
-                      <div className="absolute top-0 left-5 flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full z-10">
-                        <Megaphone className="w-2.5 h-2.5" /> Announcement
-                      </div>
-                      <PostCard post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+            {announcements.length === 0 ? (
+              <div className="text-center py-16">
+                <Megaphone className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-bold">No announcements yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {announcements.map(post => (
+                  <div key={post.id} className="relative pt-3">
+                    <div className="absolute top-0 left-5 flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full z-10">
+                      <Megaphone className="w-2.5 h-2.5" /> Announcement
                     </div>
-                  ))}
-                </div>
-              )
-            }
+                    <PostCard post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
 
-        {/* ── Players ── */}
+        {/* Players */}
         {tab === 'players' && (
           <>
             <div className="relative mb-5">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search players by username or bio…"
-                className="w-full bg-card border border-border rounded-2xl pl-11 pr-10 py-3.5 text-sm outline-none focus:border-primary transition-colors"
-              />
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players…"
+                className="w-full bg-card border border-border rounded-2xl pl-11 pr-10 py-3.5 text-sm outline-none focus:border-primary transition-colors" />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   <X className="w-4 h-4" />
@@ -403,24 +377,16 @@ export default function HaveFun() {
               )}
             </div>
 
-            {filteredPlayers.length === 0
-              ? (
-                <div className="text-center py-16">
-                  <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground font-bold">{users.length === 0 ? 'No players registered yet.' : 'No players match your search.'}</p>
-                  {users.length === 0 && (
-                    <p className="text-sm text-muted-foreground/60 mt-1">
-                      Be the first to <Link href="/sign-up" className="text-primary">create an account</Link>!
-                    </p>
-                  )}
-                </div>
-              )
-              : (
-                <div className="space-y-3">
-                  {filteredPlayers.map(u => <PlayerCard key={u.id} user={u} />)}
-                </div>
-              )
-            }
+            {filteredPlayers.length === 0 ? (
+              <div className="text-center py-16">
+                <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground font-bold">{users.length === 0 ? 'No players registered yet.' : 'No players match your search.'}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredPlayers.map(u => <PlayerCard key={u.id} user={u} />)}
+              </div>
+            )}
           </>
         )}
       </div>

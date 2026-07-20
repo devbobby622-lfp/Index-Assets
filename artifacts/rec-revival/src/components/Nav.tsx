@@ -2,6 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { LogOut, Settings, ChevronDown, ShieldCheck, Shield } from 'lucide-react';
+import Avatar from './Avatar';
 
 const AdminPanel = lazy(() => import('./AdminPanel'));
 
@@ -60,18 +61,13 @@ export default function Nav() {
 
           {/* Right */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* User dropdown */}
             {currentUser ? (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(v => !v)}
-                  className="flex items-center gap-2 bg-card border border-border rounded-full pl-2 pr-2.5 py-1.5 text-sm font-bold hover:border-primary/50 transition-colors"
+                  className="flex items-center gap-2 bg-card border border-border rounded-full pl-1.5 pr-2.5 py-1 text-sm font-bold hover:border-primary/50 transition-colors"
                 >
-                  <span className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-base flex-shrink-0">
-                    {currentUser.profileIcon || (
-                      <span className="text-primary font-black text-xs">{currentUser.username[0]?.toUpperCase()}</span>
-                    )}
-                  </span>
+                  <Avatar user={currentUser} size="xs" showOnline />
                   <span className="max-w-[90px] truncate">{currentUser.username}</span>
                   {currentUser.isAdmin && <ShieldCheck className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
@@ -94,7 +90,6 @@ export default function Nav() {
               </Link>
             )}
 
-            {/* Admin panel button — only for authorized email/admin */}
             {showAdminBtn && (
               <button
                 onClick={() => setAdminOpen(true)}
@@ -118,7 +113,6 @@ export default function Nav() {
         </div>
       </nav>
 
-      {/* Admin panel */}
       {adminOpen && (
         <Suspense fallback={null}>
           <AdminPanel onClose={() => setAdminOpen(false)} />
