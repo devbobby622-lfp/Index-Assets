@@ -1,10 +1,17 @@
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { AuthProvider } from '@/context/AuthContext';
+import { MusicProvider } from '@/context/MusicContext';
+import { PostsProvider } from '@/context/PostsContext';
 import Nav from '@/components/Nav';
+import MusicPlayer from '@/components/MusicPlayer';
 import Home from '@/pages/Home';
 import HaveFun from '@/pages/HaveFun';
 import Support from '@/pages/Support';
 import Settings from '@/pages/Settings';
 import Instructions from '@/pages/Instructions';
+import SignIn from '@/pages/SignIn';
+import SignUp from '@/pages/SignUp';
+import TwoFAVerify from '@/pages/TwoFAVerify';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -17,17 +24,27 @@ function Router() {
         <Route path="/support" component={Support} />
         <Route path="/settings" component={Settings} />
         <Route path="/instructions" component={Instructions} />
+        <Route path="/sign-in" component={SignIn} />
+        <Route path="/sign-up" component={SignUp} />
+        <Route path="/verify-2fa" component={TwoFAVerify} />
         <Route component={NotFound} />
       </Switch>
+      <MusicPlayer />
     </>
   );
 }
 
 function App() {
   return (
-    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-      <Router />
-    </WouterRouter>
+    <AuthProvider>
+      <PostsProvider>
+        <MusicProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+        </MusicProvider>
+      </PostsProvider>
+    </AuthProvider>
   );
 }
 
