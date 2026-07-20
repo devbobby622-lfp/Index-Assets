@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { usePosts } from '@/context/PostsContext';
+import { useState, useMemo, useCallback } from 'react';
+import { useAuth, UserRole } from '@/context/AuthContext';
+import { usePosts, Post } from '@/context/PostsContext';
 import { Link } from 'wouter';
 import {
-  PenLine, Megaphone, Users, Search, ImagePlus, X, Trash2, ShieldCheck
+  PenLine, Megaphone, Users, Search, ImagePlus, X, Trash2,
+  ShieldCheck, Shield, Crown
 } from 'lucide-react';
 
 type Tab = 'posts' | 'announcements' | 'players';
 
-// ── Relative time ─────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
@@ -19,82 +20,127 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-// ── Post card ─────────────────────────────────────────────────────────────────
-function PostCard({ post, canDelete, onDelete }: {
-  post: ReturnType<typeof usePosts>['posts'][number];
-  canDelete: boolean;
-  onDelete: () => void;
-}) {
+// ── Horizontal nametag row ────────────────────────────────────────────────────
+const ROLE_META: Record<UserRole, { label: string; classes: string; icon?: React.ReactNode } | null> = {
+  user: null,
+  mod: { label: 'Mod', classes: 'text-blue-400 bg-blue-500/10 border-blue-500/30', icon: <Shield className="w-2.5 h-2.5" /> },
+  owner: { label: 'Owner', classes: 'text-primary bg-primary/10 border-primary/30', icon: <Crown className="w-2.5 h-2.5" /> },
+};
+
+function Nametags({ role, isAdmin, has2FA }: { role: UserRole; isAdmin: boolean; has2FA: boolean }) {
+  const roleMeta = ROLE_META[role];
   return (
-    <div className="bg-card border border-border rounded-3xl overflow-hidden hover:border-primary/30 transition-colors">
-      {post.imageUrl && (
-        <div className="aspect-video w-full overflow-hidden">
-          <img src={post.imageUrl} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
-        </div>
+    <div className="flex items-center gap-1 flex-wrap">
+      {roleMeta && (
+        <span className={`inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border ${roleMeta.classes}`}>
+          {roleMeta.icon} {roleMeta.label}
+        </span>
       )}
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-black flex-shrink-0">
-              {post.authorUsername[0].toUpperCase()}
-            </span>
-            <div>
-              <span className="font-black text-sm">{post.authorUsername}</span>
-              <span className="text-xs text-muted-foreground ml-2">{timeAgo(post.createdAt)}</span>
-            </div>
-          </div>
-          {canDelete && (
-            <button onClick={onDelete} className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        {post.title && (
-          <h3 className="font-black text-base mb-2 bloom-text">{post.title}</h3>
-        )}
-        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
-      </div>
+      {isAdmin && (
+        <span className="inline-flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border text-amber-400 bg-amber-500/10 border-amber-500/30">
+          <ShieldCheck className="w-2.5 h-2.5" /> Admin
+        </span>
+      )}
+      {has2FA && (
+        <span className="inline-flex items-center text-[10px] font-black px-1.5 py-0.5 rounded-full border text-green-400 bg-green-500/10 border-green-500/30">
+          2FA
+        </span>
+      )}
     </div>
   );
 }
 
+// ── Post card ─────────────────────────────────────────────────────────────────
+function PostCard({ post, canDelete, onDelete }: { post: Post; canDelete: boolean; onDelete: () => void }) {
+  return (
+    <article className="bg-card border border-border rounded-3xl overflow-hidden hover:border-primary/25 transition-colors">
+      {post.imageUrl && (
+        <div className="aspect-video w-full overflow-hidden bg-muted">
+          <img src={post.imageUrl} alt="" className="w-full h-full object-cover"
+            onError={e => { (e.currentTarget.parentElement as HTMLElement).style.display = 'none'; }} />
+        </div>
+      )}
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xl flex-shrink-0 font-black">
+              {post.authorIcon || (
+                <span className="text-primary font-black text-sm">{post.authorUsername[0]?.toUpperCase()}</span>
+              )}
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="font-black text-sm">{post.authorUsername}</span>
+                {post.authorRole && post.authorRole !== 'user' && (
+                  <Nametags role={post.authorRole} isAdmin={!!post.authorIsAdmin} has2FA={false} />
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</span>
+            </div>
+          </div>
+          {canDelete && (
+            <button onClick={onDelete} className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0 mt-0.5">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {post.title && <h3 className="font-black text-base mb-2 bloom-text">{post.title}</h3>}
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
+      </div>
+    </article>
+  );
+}
+
 // ── Compose form ──────────────────────────────────────────────────────────────
-function ComposeForm({ isAnnouncement, onSubmit }: {
+function ComposeForm({
+  isAnnouncement,
+  placeholder,
+  buttonLabel,
+  onPost,
+}: {
   isAnnouncement: boolean;
-  onSubmit: (title: string, content: string, imageUrl: string) => void;
+  placeholder: string;
+  buttonLabel: string;
+  onPost: (title: string, content: string, imageUrl: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [showImageField, setShowImageField] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [showImage, setShowImage] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const reset = () => { setTitle(''); setContent(''); setImageUrl(''); setShowImage(false); setOpen(false); };
+
+  const submit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
-    onSubmit(title, content, imageUrl);
-    setTitle(''); setContent(''); setImageUrl(''); setShowImageField(false); setOpen(false);
-  };
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    onPost(title.trim(), trimmed, imageUrl.trim());
+    reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, content, imageUrl, onPost]);
 
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full bg-card border border-dashed border-border rounded-3xl p-4 flex items-center gap-3 text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors text-left mb-5"
+        className="w-full bg-card border border-dashed border-border rounded-3xl p-4 flex items-center gap-3 text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors text-left mb-4"
       >
-        <PenLine className="w-4 h-4 flex-shrink-0" />
-        <span className="text-sm">{isAnnouncement ? 'Post an announcement…' : 'Share something with the community…'}</span>
+        <PenLine className="w-4 h-4 flex-shrink-0 text-primary" />
+        <span className="text-sm">{placeholder}</span>
       </button>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-card border border-primary/30 rounded-3xl p-5 mb-5" style={{ boxShadow: '0 0 0 1px hsl(var(--primary)/0.1), 0 8px 32px rgba(0,0,0,0.2)' }}>
-      <div className="flex items-center justify-between mb-4">
+    <form
+      onSubmit={submit}
+      className="bg-card border border-primary/30 rounded-3xl p-5 mb-4"
+      style={{ boxShadow: '0 0 0 1px hsl(var(--primary)/0.1), 0 8px 32px rgba(0,0,0,0.2)' }}
+    >
+      <div className="flex items-center justify-between mb-3">
         <h3 className="font-black text-sm">{isAnnouncement ? 'New Announcement' : 'New Post'}</h3>
-        <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
-          <X className="w-4 h-4" />
-        </button>
+        <button type="button" onClick={reset} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
       </div>
 
       <input
@@ -108,29 +154,29 @@ function ComposeForm({ isAnnouncement, onSubmit }: {
       <textarea
         value={content}
         onChange={e => setContent(e.target.value)}
-        placeholder={isAnnouncement ? 'Write an announcement for the community…' : 'What\'s on your mind? Share updates, rooms, or just say hi!'}
+        placeholder={isAnnouncement ? 'Write your announcement for the community…' : 'What\'s on your mind? Share updates, rooms, or just say hi!'}
         rows={5}
         required
         className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary transition-colors resize-none mb-3"
       />
 
-      {showImageField && (
+      {showImage && (
         <div className="relative mb-3">
           <input
             type="url"
             value={imageUrl}
             onChange={e => setImageUrl(e.target.value)}
-            placeholder="Image URL (optional)"
+            placeholder="Paste image URL…"
             className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors pr-10"
           />
-          <button type="button" onClick={() => { setShowImageField(false); setImageUrl(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={() => { setShowImage(false); setImageUrl(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {imageUrl && (
-        <div className="mb-3 rounded-2xl overflow-hidden border border-border aspect-video">
+        <div className="mb-3 rounded-2xl overflow-hidden border border-border aspect-video bg-muted">
           <img src={imageUrl} alt="preview" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
         </div>
       )}
@@ -138,22 +184,22 @@ function ComposeForm({ isAnnouncement, onSubmit }: {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => setShowImageField(v => !v)}
+          onClick={() => setShowImage(v => !v)}
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
         >
-          <ImagePlus className="w-4 h-4" /> Add image
+          <ImagePlus className="w-4 h-4" /> {showImage ? 'Remove image' : 'Add image'}
         </button>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors">
+          <button type="button" onClick={reset} className="px-4 py-2 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors">
             Cancel
           </button>
           <button
             type="submit"
             disabled={!content.trim()}
-            className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-black hover:opacity-90 disabled:opacity-60"
+            className="px-5 py-2 rounded-xl bg-primary text-white text-sm font-black hover:opacity-90 disabled:opacity-50 transition-opacity"
             style={{ boxShadow: '0 4px 12px hsl(var(--primary)/0.3)' }}
           >
-            {isAnnouncement ? 'Post Announcement' : 'Post'}
+            {buttonLabel}
           </button>
         </div>
       </div>
@@ -165,40 +211,32 @@ function ComposeForm({ isAnnouncement, onSubmit }: {
 function PlayerCard({ user }: { user: ReturnType<typeof useAuth>['users'][number] }) {
   return (
     <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4 hover:border-primary/30 transition-colors">
-      <span className="w-11 h-11 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl font-black flex-shrink-0">
-        {user.username[0].toUpperCase()}
+      <span className="w-11 h-11 rounded-2xl bg-primary/15 flex items-center justify-center text-2xl flex-shrink-0">
+        {user.profileIcon || <span className="text-primary font-black text-lg">{user.username[0]?.toUpperCase()}</span>}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
           <span className="font-black text-sm">{user.username}</span>
-          {user.isAdmin && (
-            <span className="flex items-center gap-1 text-xs text-primary font-bold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
-              <ShieldCheck className="w-3 h-3" /> Admin
-            </span>
-          )}
-          {user.has2FA && (
-            <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full font-bold">2FA</span>
-          )}
+          <Nametags role={user.role} isAdmin={user.isAdmin} has2FA={user.has2FA} />
         </div>
-        {user.bio ? (
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{user.bio}</p>
-        ) : (
-          <p className="text-xs text-muted-foreground/50 mt-1 italic">No bio yet.</p>
-        )}
+        {user.bio
+          ? <p className="text-xs text-muted-foreground leading-relaxed">{user.bio}</p>
+          : <p className="text-xs text-muted-foreground/40 italic">No bio yet.</p>
+        }
       </div>
     </div>
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function HaveFun() {
   const { currentUser, users } = useAuth();
   const { posts, createPost, deletePost } = usePosts();
   const [tab, setTab] = useState<Tab>('posts');
   const [search, setSearch] = useState('');
 
-  const regularPosts = posts.filter(p => !p.isAnnouncement);
-  const announcements = posts.filter(p => p.isAnnouncement);
+  const regularPosts = useMemo(() => posts.filter(p => !p.isAnnouncement), [posts]);
+  const announcements = useMemo(() => posts.filter(p => p.isAnnouncement), [posts]);
 
   const filteredPlayers = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -206,25 +244,30 @@ export default function HaveFun() {
     return users.filter(u => u.username.toLowerCase().includes(q) || u.bio.toLowerCase().includes(q));
   }, [users, search]);
 
-  const handlePost = (title: string, content: string, imageUrl: string, isAnnouncement: boolean) => {
+  const handlePost = useCallback((title: string, content: string, imageUrl: string, isAnnouncement: boolean) => {
     if (!currentUser) return;
     createPost({
       authorId: currentUser.id,
       authorUsername: currentUser.username,
+      authorIcon: currentUser.profileIcon,
+      authorRole: currentUser.role,
+      authorIsAdmin: currentUser.isAdmin,
       title,
       content,
       imageUrl: imageUrl || undefined,
       isAnnouncement,
     });
-  };
+  }, [currentUser, createPost]);
 
-  const canDelete = (post: typeof posts[number]) =>
-    !!(currentUser && (currentUser.id === post.authorId || currentUser.isAdmin));
+  const canDelete = useCallback((post: Post) =>
+    !!(currentUser && (currentUser.id === post.authorId || currentUser.isAdmin)),
+    [currentUser]
+  );
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: 'posts', label: 'Posts', icon: <PenLine className="w-4 h-4" />, count: regularPosts.length },
-    { id: 'announcements', label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, count: announcements.length },
-    { id: 'players', label: 'Players', icon: <Users className="w-4 h-4" />, count: users.length },
+  const tabs = [
+    { id: 'posts' as Tab,         label: 'Posts',         icon: <PenLine className="w-4 h-4" />,   count: regularPosts.length },
+    { id: 'announcements' as Tab, label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, count: announcements.length },
+    { id: 'players' as Tab,       label: 'Players',       icon: <Users className="w-4 h-4" />,     count: users.length },
   ];
 
   return (
@@ -259,87 +302,91 @@ export default function HaveFun() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tab === t.id
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                tab === t.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'
               }`}
               style={tab === t.id ? { boxShadow: '0 4px 12px hsl(var(--primary)/0.25)' } : {}}
             >
-              {t.icon}
-              {t.label}
-              {t.count !== undefined && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>
-                  {t.count}
-                </span>
-              )}
+              {t.icon} {t.label}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>
+                {t.count}
+              </span>
             </button>
           ))}
         </div>
 
-        {/* ── Posts tab ── */}
+        {/* ── Posts ── */}
         {tab === 'posts' && (
-          <div>
+          <>
             {currentUser && (
               <ComposeForm
                 isAnnouncement={false}
-                onSubmit={(title, content, imageUrl) => handlePost(title, content, imageUrl, false)}
+                placeholder="Share something with the community…"
+                buttonLabel="Post"
+                onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, false)}
               />
             )}
-            {regularPosts.length === 0 ? (
-              <div className="text-center py-16">
-                <PenLine className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground font-bold">No posts yet</p>
-                <p className="text-sm text-muted-foreground/60">Be the first to share something!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {regularPosts.map(post => (
-                  <PostCard key={post.id} post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
-                ))}
-              </div>
-            )}
-          </div>
+            {regularPosts.length === 0
+              ? (
+                <div className="text-center py-16">
+                  <PenLine className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground font-bold">No posts yet.</p>
+                  <p className="text-sm text-muted-foreground/60">Be the first to share something!</p>
+                </div>
+              )
+              : (
+                <div className="space-y-4">
+                  {regularPosts.map(post => (
+                    <PostCard key={post.id} post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+                  ))}
+                </div>
+              )
+            }
+          </>
         )}
 
-        {/* ── Announcements tab ── */}
+        {/* ── Announcements ── */}
         {tab === 'announcements' && (
-          <div>
+          <>
             {currentUser?.isAdmin && (
-              <div className="mb-2">
+              <>
                 <div className="flex items-center gap-2 mb-3">
                   <ShieldCheck className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-bold text-primary">Admin — Only you can post here</span>
+                  <span className="text-xs font-bold text-primary">Admin — only you can post here</span>
                 </div>
                 <ComposeForm
                   isAnnouncement
-                  onSubmit={(title, content, imageUrl) => handlePost(title, content, imageUrl, true)}
+                  placeholder="Write an announcement for the community…"
+                  buttonLabel="Post Announcement"
+                  onPost={(title, content, imageUrl) => handlePost(title, content, imageUrl, true)}
                 />
-              </div>
+              </>
             )}
-            {announcements.length === 0 ? (
-              <div className="text-center py-16">
-                <Megaphone className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground font-bold">No announcements yet</p>
-                {currentUser?.isAdmin && <p className="text-sm text-muted-foreground/60">Post above to make an announcement.</p>}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {announcements.map(post => (
-                  <div key={post.id} className="relative">
-                    <div className="absolute -top-2 left-5 flex items-center gap-1.5 bg-primary text-white text-xs font-black px-2.5 py-1 rounded-full z-10">
-                      <Megaphone className="w-3 h-3" /> Announcement
+            {announcements.length === 0
+              ? (
+                <div className="text-center py-16">
+                  <Megaphone className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground font-bold">No announcements yet.</p>
+                </div>
+              )
+              : (
+                <div className="space-y-5">
+                  {announcements.map(post => (
+                    <div key={post.id} className="relative pt-3">
+                      <div className="absolute top-0 left-5 flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full z-10">
+                        <Megaphone className="w-2.5 h-2.5" /> Announcement
+                      </div>
+                      <PostCard post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
                     </div>
-                    <PostCard post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )
+            }
+          </>
         )}
 
-        {/* ── Players tab ── */}
+        {/* ── Players ── */}
         {tab === 'players' && (
-          <div>
+          <>
             <div className="relative mb-5">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -347,7 +394,7 @@ export default function HaveFun() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search players by username or bio…"
-                className="w-full bg-card border border-border rounded-2xl pl-11 pr-4 py-3.5 text-sm outline-none focus:border-primary transition-colors"
+                className="w-full bg-card border border-border rounded-2xl pl-11 pr-10 py-3.5 text-sm outline-none focus:border-primary transition-colors"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -356,32 +403,28 @@ export default function HaveFun() {
               )}
             </div>
 
-            {filteredPlayers.length === 0 ? (
-              <div className="text-center py-16">
-                <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground font-bold">No players found</p>
-                <p className="text-sm text-muted-foreground/60">Try a different search.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredPlayers.map(u => (
-                  <PlayerCard key={u.id} user={u} />
-                ))}
-              </div>
-            )}
-
-            {users.length === 0 && (
-              <div className="text-center py-16">
-                <Users className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground font-bold">No registered players yet</p>
-                <p className="text-sm text-muted-foreground/60">Be the first to <Link href="/sign-up" className="text-primary">create an account</Link>!</p>
-              </div>
-            )}
-          </div>
+            {filteredPlayers.length === 0
+              ? (
+                <div className="text-center py-16">
+                  <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-muted-foreground font-bold">{users.length === 0 ? 'No players registered yet.' : 'No players match your search.'}</p>
+                  {users.length === 0 && (
+                    <p className="text-sm text-muted-foreground/60 mt-1">
+                      Be the first to <Link href="/sign-up" className="text-primary">create an account</Link>!
+                    </p>
+                  )}
+                </div>
+              )
+              : (
+                <div className="space-y-3">
+                  {filteredPlayers.map(u => <PlayerCard key={u.id} user={u} />)}
+                </div>
+              )
+            }
+          </>
         )}
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border py-10 px-6 mt-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="font-black text-primary text-lg">Rec Room Revival</span>

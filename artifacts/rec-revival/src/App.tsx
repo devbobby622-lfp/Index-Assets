@@ -2,6 +2,7 @@ import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { AuthProvider } from '@/context/AuthContext';
 import { MusicProvider } from '@/context/MusicContext';
 import { PostsProvider } from '@/context/PostsContext';
+import { PrefsProvider } from '@/context/PrefsContext';
 import Nav from '@/components/Nav';
 import MusicPlayer from '@/components/MusicPlayer';
 import Home from '@/pages/Home';
@@ -34,18 +35,18 @@ function Router() {
   );
 }
 
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
-      <PostsProvider>
-        <MusicProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Router />
-          </WouterRouter>
-        </MusicProvider>
-      </PostsProvider>
-    </AuthProvider>
+    <PrefsProvider>
+      <AuthProvider>
+        <PostsProvider>
+          <MusicProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <Router />
+            </WouterRouter>
+          </MusicProvider>
+        </PostsProvider>
+      </AuthProvider>
+    </PrefsProvider>
   );
 }
-
-export default App;
