@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { LogOut, Settings, ChevronDown, ShieldCheck, Shield } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, ShieldCheck, Shield, Bell } from 'lucide-react';
 import Avatar from './Avatar';
 
 const AdminPanel = lazy(() => import('./AdminPanel'));
@@ -61,6 +61,8 @@ export default function Nav() {
 
           {/* Right */}
           <div className="flex items-center gap-2 flex-shrink-0">
+
+
             {currentUser ? (
               <div className="relative" ref={menuRef}>
                 <button
@@ -89,6 +91,16 @@ export default function Nav() {
                 Sign In
               </Link>
             )}
+
+            {/* Notification bell — next to account */}
+            <button
+              onClick={() => {}}
+              title="Notifications"
+              className="relative w-9 h-9 flex items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
+            </button>
 
             {showAdminBtn && (
               <button
