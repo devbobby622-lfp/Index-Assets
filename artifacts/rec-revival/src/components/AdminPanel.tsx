@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAuth, User, UserRole } from '@/context/AuthContext';
 import { usePosts } from '@/context/PostsContext';
 import {
-  X, Search, Shield, ShieldBan, Ban, UserX, Clock, Megaphone,
+  X, Search, Shield, ShieldBan, ShieldOff, Ban, UserX, Clock, Megaphone,
   ChevronDown, ChevronRight, Check, ImagePlus, Trash2, Crown, Users
 } from 'lucide-react';
 
@@ -51,7 +51,7 @@ const UNIT_MS: Record<DurationUnit, number> = {
 
 // ── Player row ─────────────────────────────────────────────────────────────────
 function PlayerRow({ user, currentUserId }: { user: User; currentUserId: string }) {
-  const { setUserRole, banUser, unbanUser, deleteUser } = useAuth();
+  const { setUserRole, banUser, unbanUser, deleteUser, disableUser2FA } = useAuth();
   const [open, setOpen] = useState(false);
   const [banAmount, setBanAmount] = useState('1');
   const [banUnit, setBanUnit] = useState<DurationUnit>('hours');
@@ -205,6 +205,16 @@ function PlayerRow({ user, currentUserId }: { user: User; currentUserId: string 
               className="w-full py-1.5 rounded-lg text-xs font-black border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
             >
               ✓ Remove Ban
+            </button>
+          )}
+
+          {/* Disable 2FA (support cases) */}
+          {user.has2FA && (
+            <button
+              onClick={() => disableUser2FA(user.id)}
+              className="w-full py-1.5 rounded-lg text-xs font-black border border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-1"
+            >
+              <ShieldOff className="w-3 h-3" /> Disable 2FA
             </button>
           )}
 

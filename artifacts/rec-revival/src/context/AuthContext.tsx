@@ -45,6 +45,7 @@ interface AuthContextType {
   enable2FA: () => { seed: string; backupCodes: string[] };
   confirm2FAEnable: (seed: string, backupCodes: string[], code: string) => { success: boolean; error?: string };
   disable2FA: () => void;
+  disableUser2FA: (userId: string) => void;
   claimAdmin: (code: string) => boolean;
   getTOTPCode: (seed: string) => string;
   getEmailCode: (userId: string) => string;
@@ -305,6 +306,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const disableUser2FA = useCallback((userId: string) => {
+    setState(s => ({
+      ...s,
+      users: s.users.map(u => u.id === userId ? { ...u, has2FA: false, twoFASeed: '', backupCodes: [] } : u),
+    }));
+  }, []);
+
   const claimAdmin = useCallback((code: string) => {
     if (code.trim() !== ADMIN_CODE) return false;
     setState(s => ({
@@ -380,7 +388,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isSuperAdmin,
       signUp, signIn, verify2FA, useBackupCode, signOut,
       updateUser, deleteAccount,
-      enable2FA, confirm2FAEnable, disable2FA, claimAdmin,
+      enable2FA, confirm2FAEnable, disable2FA, disableUser2FA, claimAdmin,
       getTOTPCode, getEmailCode,
       subscribe, unsubscribe, isFollowing, getFollowerCount,
       setUserRole, banUser, unbanUser, deleteUser,
