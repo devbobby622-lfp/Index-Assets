@@ -73,6 +73,13 @@ export default defineConfig({
         path.resolve(import.meta.dirname, '..', '..', 'attached_assets'),
       ],
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   },
   preview: {
     port,

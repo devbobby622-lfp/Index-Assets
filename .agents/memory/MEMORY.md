@@ -1,0 +1,1 @@
+- [Realtime multiplayer stack](realtime-multiplayer.md) — Socket.io on API server (path /api/socket.io), Vite proxy for /api, PostgreSQL posts; presence is in-memory on the server.

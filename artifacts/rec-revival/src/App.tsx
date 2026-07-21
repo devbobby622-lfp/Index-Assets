@@ -3,6 +3,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { MusicProvider } from '@/context/MusicContext';
 import { PostsProvider } from '@/context/PostsContext';
 import { PrefsProvider } from '@/context/PrefsContext';
+import { RealtimeProvider } from '@/context/RealtimeContext';
 import Nav from '@/components/Nav';
 import RecBuildAssistant from '@/components/RecBuildAssistant';
 import SplashScreen from '@/components/SplashScreen';
@@ -14,6 +15,7 @@ import Instructions from '@/pages/Instructions';
 import SignIn from '@/pages/SignIn';
 import SignUp from '@/pages/SignUp';
 import TwoFAVerify from '@/pages/TwoFAVerify';
+import Players from '@/pages/Players';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -29,6 +31,7 @@ function Router() {
         <Route path="/sign-in" component={SignIn} />
         <Route path="/sign-up" component={SignUp} />
         <Route path="/verify-2fa" component={TwoFAVerify} />
+        <Route path="/players" component={Players} />
         <Route component={NotFound} />
       </Switch>
       <RecBuildAssistant />
@@ -40,13 +43,15 @@ export default function App() {
   return (
     <PrefsProvider>
       <AuthProvider>
-        <PostsProvider>
-          <MusicProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <RealtimeProvider>
+          <PostsProvider>
+            <MusicProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
                 <Router />
               </WouterRouter>
-          </MusicProvider>
-        </PostsProvider>
+            </MusicProvider>
+          </PostsProvider>
+        </RealtimeProvider>
       </AuthProvider>
       <SplashScreen />
     </PrefsProvider>

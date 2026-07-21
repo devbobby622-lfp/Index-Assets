@@ -8,6 +8,7 @@ const AdminPanel = lazy(() => import('./AdminPanel'));
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/players', label: 'Players' },
   { href: '/have-fun', label: 'Have Fun' },
   { href: '/support', label: 'Support & Recagain archive' },
   { href: '/settings', label: 'Settings' },

@@ -475,7 +475,7 @@ export default function HaveFun() {
                     key={post.id}
                     post={post}
                     canDelete={canDelete(post)}
-                    onDelete={() => deletePost(post.id)}
+                    onDelete={() => deletePost(post.id, post.authorId)}
                     currentUserId={currentUser?.id ?? null}
                     onLike={() => currentUser && likePost(post.id, currentUser.id)}
                     onDislike={() => currentUser && dislikePost(post.id, currentUser.id)}
@@ -514,7 +514,7 @@ export default function HaveFun() {
                     <PostCard
                       post={post}
                       canDelete={canDelete(post)}
-                      onDelete={() => deletePost(post.id)}
+                      onDelete={() => deletePost(post.id, post.authorId)}
                       currentUserId={currentUser?.id ?? null}
                       onLike={() => currentUser && likePost(post.id, currentUser.id)}
                       onDislike={() => currentUser && dislikePost(post.id, currentUser.id)}
