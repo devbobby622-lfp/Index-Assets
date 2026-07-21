@@ -3,6 +3,8 @@ import { AuthProvider } from '@/context/AuthContext';
 import { MusicProvider } from '@/context/MusicContext';
 import { PostsProvider } from '@/context/PostsContext';
 import { PrefsProvider } from '@/context/PrefsContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { Toaster } from '@/components/ui/sonner';
 import Nav from '@/components/Nav';
 import MusicPlayer from '@/components/MusicPlayer';
 import RecBuildAssistant from '@/components/RecBuildAssistant';
@@ -44,9 +46,12 @@ export default function App() {
       <AuthProvider>
         <PostsProvider>
           <MusicProvider>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-              <Router />
-            </WouterRouter>
+            <NotificationProvider>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </NotificationProvider>
           </MusicProvider>
         </PostsProvider>
       </AuthProvider>

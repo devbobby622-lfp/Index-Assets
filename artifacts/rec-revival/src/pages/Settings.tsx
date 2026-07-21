@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import { usePrefs } from '@/context/PrefsContext';
+import { useNotify } from '@/context/NotificationContext';
 import { useMusic } from '@/context/MusicContext';
 import { QRCodeSVG } from 'qrcode.react';
 import * as OTPAuth from 'otpauth';
@@ -330,6 +331,7 @@ function DeleteAuthModal({ onClose }: { onClose: () => void }) {
 export default function Settings() {
   const { currentUser, updateUser, deleteAccount, signOut, claimAdmin } = useAuth();
   const { prefs, setPrefs } = usePrefs();
+  const notify = useNotify();
   const [, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
@@ -538,7 +540,7 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">Floating chat bot (disabled by default)</p>
               </div>
             </div>
-            <Toggle checked={prefs.assistantEnabled} onChange={v => setPrefs({ assistantEnabled: v })} />
+            <Toggle checked={prefs.assistantEnabled} onChange={v => { setPrefs({ assistantEnabled: v }); notify(v ? 'Assistant enabled — chat icon will appear' : 'Assistant disabled', 'info'); }} />
           </Row>
 
           {/* UI Transparency toggle */}
@@ -550,7 +552,7 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">Make panels semi-transparent (disabled by default)</p>
               </div>
             </div>
-            <Toggle checked={prefs.uiTransparencyEnabled} onChange={v => setPrefs({ uiTransparencyEnabled: v })} />
+            <Toggle checked={prefs.uiTransparencyEnabled} onChange={v => { setPrefs({ uiTransparencyEnabled: v }); notify(v ? 'Transparency enabled — adjust the slider below' : 'Transparency disabled', 'info'); }} />
           </Row>
 
           {prefs.uiTransparencyEnabled && (
@@ -598,7 +600,7 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">Glow effect on headings</p>
               </div>
             </div>
-            <Toggle checked={prefs.bloomEnabled} onChange={v => setPrefs({ bloomEnabled: v })} />
+            <Toggle checked={prefs.bloomEnabled} onChange={v => { setPrefs({ bloomEnabled: v }); notify(v ? 'Bloom effect enabled' : 'Bloom effect disabled', 'info'); }} />
           </Row>
 
           {prefs.bloomEnabled && (

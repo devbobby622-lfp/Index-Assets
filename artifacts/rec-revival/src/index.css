@@ -174,6 +174,38 @@
     -moz-osx-font-smoothing: grayscale;
     font-family: var(--app-font-sans);
   }
+
+  /* ── UI Transparency ──────────────────────────────────── */
+  /* Applied via CSS custom prop set by PrefsContext         */
+
+  /* All card/surface backgrounds */
+  .bg-card,
+  .bg-popover,
+  .bg-muted,
+  .bg-sidebar,
+  .bg-background:not(body, nav, nav *),
+  .rr-card {
+    background-color: hsl(var(--card) / var(--ui-panel-opacity, 1));
+  }
+
+  /* Buttons and interactive elements */
+  button,
+  [role="button"],
+  .rr-tab {
+    opacity: var(--ui-panel-opacity, 1);
+  }
+
+  /* Nav bar stays full-opacity so it's always usable */
+  nav,
+  nav * {
+    opacity: revert;
+  }
+
+  /* Ensure toasts, modals and overlays stay opaque */
+  [data-sonner-toaster],
+  [role="dialog"] {
+    opacity: revert !important;
+  }
 }
 
 @layer utilities {
