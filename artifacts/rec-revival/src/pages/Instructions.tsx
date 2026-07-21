@@ -98,7 +98,7 @@ export default function Instructions() {
                   </div>
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
                     <p className="text-sm font-black text-primary mb-0.5">#pc-builds</p>
-                    <p className="text-xs text-muted-foreground">For Windows and Mac computers</p>
+                    <p className="text-xs text-muted-foreground">For Windows os</p>
                   </div>
                 </div>
               </div>
