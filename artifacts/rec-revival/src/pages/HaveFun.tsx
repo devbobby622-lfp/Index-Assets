@@ -5,10 +5,12 @@ import { Link } from 'wouter';
 import Avatar from '@/components/Avatar';
 import {
   PenLine, Megaphone, Users, Search, ImagePlus, X, Trash2,
-  ShieldCheck, Shield, Crown, UserPlus, UserCheck
+  ShieldCheck, Shield, Crown, UserPlus, UserCheck, ThumbsUp, ThumbsDown,
+  Gamepad2,
 } from 'lucide-react';
+import bannerPlaceholder from '@assets/Screenshot_2026-07-20_202934_1784593782231.png';
 
-type Tab = 'posts' | 'announcements' | 'players';
+type Tab = 'posts' | 'announcements' | 'rooms-events' | 'players';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function timeAgo(iso: string) {
@@ -52,9 +54,20 @@ function Nametags({ role, isAdmin, has2FA }: { role: UserRole; isAdmin: boolean;
 }
 
 // ── Post card ─────────────────────────────────────────────────────────────────
-function PostCard({ post, canDelete, onDelete }: { post: Post; canDelete: boolean; onDelete: () => void }) {
+function PostCard({
+  post, canDelete, onDelete, currentUserId, onLike, onDislike,
+}: {
+  post: Post;
+  canDelete: boolean;
+  onDelete: () => void;
+  currentUserId: string | null;
+  onLike: () => void;
+  onDislike: () => void;
+}) {
   const { users } = useAuth();
   const author = users.find(u => u.id === post.authorId);
+  const liked = currentUserId ? post.likes.includes(currentUserId) : false;
+  const disliked = currentUserId ? post.dislikes.includes(currentUserId) : false;
 
   return (
     <article className="bg-card border border-border rounded-3xl overflow-hidden hover:border-primary/25 transition-colors">
@@ -89,6 +102,34 @@ function PostCard({ post, canDelete, onDelete }: { post: Post; canDelete: boolea
         </div>
         {post.title && <h3 className="font-black text-base mb-2 bloom-text">{post.title}</h3>}
         <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{post.content}</p>
+
+        {/* Like / Dislike */}
+        <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border">
+          <button
+            onClick={currentUserId ? onLike : undefined}
+            disabled={!currentUserId}
+            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
+              liked
+                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                : 'border-border text-muted-foreground hover:border-green-500/40 hover:text-green-400 disabled:opacity-40 disabled:cursor-not-allowed'
+            }`}
+          >
+            <ThumbsUp className="w-3.5 h-3.5" />
+            <span>{post.likes.length}</span>
+          </button>
+          <button
+            onClick={currentUserId ? onDislike : undefined}
+            disabled={!currentUserId}
+            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
+              disliked
+                ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                : 'border-border text-muted-foreground hover:border-red-500/40 hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed'
+            }`}
+          >
+            <ThumbsDown className="w-3.5 h-3.5" />
+            <span>{post.dislikes.length}</span>
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -175,8 +216,14 @@ function ComposeForm({
   );
 }
 
-// ── Player card ───────────────────────────────────────────────────────────────
-function PlayerCard({ user }: { user: ReturnType<typeof useAuth>['users'][number] }) {
+// ── Player Profile Modal ──────────────────────────────────────────────────────
+function PlayerProfileModal({
+  user,
+  onClose,
+}: {
+  user: ReturnType<typeof useAuth>['users'][number];
+  onClose: () => void;
+}) {
   const { currentUser, subscribe, unsubscribe, isFollowing, getFollowerCount } = useAuth();
   const following = isFollowing(user.id);
   const followerCount = getFollowerCount(user.id);
@@ -189,7 +236,100 @@ function PlayerCard({ user }: { user: ReturnType<typeof useAuth>['users'][number
   };
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4 hover:border-primary/30 transition-colors">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-card border border-border rounded-3xl w-full max-w-md overflow-hidden" style={{ boxShadow: '0 32px 80px rgba(0,0,0,0.5)' }}>
+        {/* Banner */}
+        <div className="relative h-36 overflow-hidden bg-muted">
+          <img
+            src={user.bannerImage || bannerPlaceholder}
+            alt="Profile banner"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Avatar overlapping banner */}
+        <div className="px-5 pb-5">
+          <div className="-mt-10 mb-3 flex items-end justify-between">
+            <div className="ring-4 ring-card rounded-full">
+              <Avatar user={user} size="xl" showOnline />
+            </div>
+            {currentUser && !isSelf && (
+              <button
+                onClick={handleFollow}
+                className={`flex items-center gap-1.5 text-xs font-black px-4 py-2 rounded-full border transition-all ${
+                  following
+                    ? 'bg-primary/10 border-primary/30 text-primary hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400'
+                    : 'bg-primary text-white border-transparent hover:opacity-90'
+                }`}
+                style={!following ? { boxShadow: '0 4px 12px hsl(var(--primary)/0.3)' } : {}}
+              >
+                {following
+                  ? <><UserCheck className="w-3 h-3" /> Following</>
+                  : <><UserPlus className="w-3 h-3" /> Subscribe</>
+                }
+              </button>
+            )}
+          </div>
+
+          {/* Name & tags */}
+          <h2 className="font-black text-xl mb-1">{user.username}</h2>
+          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            <Nametags role={user.role} isAdmin={user.isAdmin} has2FA={user.has2FA} />
+          </div>
+
+          {/* Stats row */}
+          <div className="flex items-center gap-4 mb-3">
+            <div className="text-center">
+              <p className="font-black text-base text-primary">{followerCount}</p>
+              <p className="text-[10px] text-muted-foreground">subscriber{followerCount !== 1 ? 's' : ''}</p>
+            </div>
+            <div className="text-center">
+              <p className="font-black text-base text-primary capitalize">{user.role}</p>
+              <p className="text-[10px] text-muted-foreground">role</p>
+            </div>
+          </div>
+
+          {/* Bio */}
+          {user.bio
+            ? <p className="text-sm text-muted-foreground leading-relaxed">{user.bio}</p>
+            : <p className="text-sm text-muted-foreground/40 italic">No bio yet.</p>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Player card ───────────────────────────────────────────────────────────────
+function PlayerCard({ user, onClick }: { user: ReturnType<typeof useAuth>['users'][number]; onClick: () => void }) {
+  const { currentUser, subscribe, unsubscribe, isFollowing, getFollowerCount } = useAuth();
+  const following = isFollowing(user.id);
+  const followerCount = getFollowerCount(user.id);
+  const isSelf = currentUser?.id === user.id;
+
+  const handleFollow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser || isSelf) return;
+    if (following) unsubscribe(user.id);
+    else subscribe(user.id);
+  };
+
+  return (
+    <div
+      className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4 hover:border-primary/30 transition-colors cursor-pointer"
+      onClick={onClick}
+    >
       <Avatar user={user} size="md" showOnline />
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
@@ -232,9 +372,10 @@ function PlayerCard({ user }: { user: ReturnType<typeof useAuth>['users'][number
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function HaveFun() {
   const { currentUser, users } = useAuth();
-  const { posts, createPost, deletePost } = usePosts();
+  const { posts, createPost, deletePost, likePost, dislikePost } = usePosts();
   const [tab, setTab] = useState<Tab>('posts');
   const [search, setSearch] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<ReturnType<typeof useAuth>['users'][number] | null>(null);
 
   const regularPosts = useMemo(() => posts.filter(p => !p.isAnnouncement), [posts]);
   const announcements = useMemo(() => posts.filter(p => p.isAnnouncement), [posts]);
@@ -266,13 +407,18 @@ export default function HaveFun() {
   );
 
   const tabs = [
-    { id: 'posts' as Tab,         label: 'Posts',         icon: <PenLine className="w-4 h-4" />,   count: regularPosts.length },
-    { id: 'announcements' as Tab, label: 'Announcements', icon: <Megaphone className="w-4 h-4" />, count: announcements.length },
-    { id: 'players' as Tab,       label: 'Players',       icon: <Users className="w-4 h-4" />,     count: users.length },
+    { id: 'posts' as Tab,         label: 'Posts',          icon: <PenLine className="w-4 h-4" />,   count: regularPosts.length },
+    { id: 'announcements' as Tab, label: 'Announcements',  icon: <Megaphone className="w-4 h-4" />, count: announcements.length },
+    { id: 'rooms-events' as Tab,  label: 'Rooms & Events', icon: <Gamepad2 className="w-4 h-4" />,  count: 0 },
+    { id: 'players' as Tab,       label: 'Players',        icon: <Users className="w-4 h-4" />,      count: users.length },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
+      {selectedPlayer && (
+        <PlayerProfileModal user={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      )}
+
       {/* Hero */}
       <section className="py-16 px-6 border-b border-border">
         <div className="max-w-3xl mx-auto text-center">
@@ -295,14 +441,16 @@ export default function HaveFun() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-card border border-border rounded-2xl mb-7 w-fit">
+        <div className="flex flex-wrap gap-1 p-1 bg-card border border-border rounded-2xl mb-7 w-fit">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === t.id ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
               style={tab === t.id ? { boxShadow: '0 4px 12px hsl(var(--primary)/0.25)' } : {}}
             >
               {t.icon} {t.label}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>{t.count}</span>
+              {t.count > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-black ${tab === t.id ? 'bg-white/25' : 'bg-muted'}`}>{t.count}</span>
+              )}
             </button>
           ))}
         </div>
@@ -323,7 +471,15 @@ export default function HaveFun() {
             ) : (
               <div className="space-y-4">
                 {regularPosts.map(post => (
-                  <PostCard key={post.id} post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    canDelete={canDelete(post)}
+                    onDelete={() => deletePost(post.id)}
+                    currentUserId={currentUser?.id ?? null}
+                    onLike={() => currentUser && likePost(post.id, currentUser.id)}
+                    onDislike={() => currentUser && dislikePost(post.id, currentUser.id)}
+                  />
                 ))}
               </div>
             )}
@@ -355,12 +511,30 @@ export default function HaveFun() {
                     <div className="absolute top-0 left-5 flex items-center gap-1.5 bg-primary text-white text-[10px] font-black px-2.5 py-1 rounded-full z-10">
                       <Megaphone className="w-2.5 h-2.5" /> Announcement
                     </div>
-                    <PostCard post={post} canDelete={canDelete(post)} onDelete={() => deletePost(post.id)} />
+                    <PostCard
+                      post={post}
+                      canDelete={canDelete(post)}
+                      onDelete={() => deletePost(post.id)}
+                      currentUserId={currentUser?.id ?? null}
+                      onLike={() => currentUser && likePost(post.id, currentUser.id)}
+                      onDislike={() => currentUser && dislikePost(post.id, currentUser.id)}
+                    />
                   </div>
                 ))}
               </div>
             )}
           </>
+        )}
+
+        {/* Rooms & Events */}
+        {tab === 'rooms-events' && (
+          <div className="text-center py-24">
+            <Gamepad2 className="w-14 h-14 text-muted-foreground/20 mx-auto mb-4" />
+            <p className="text-muted-foreground font-black text-lg mb-2">Coming Soon</p>
+            <p className="text-sm text-muted-foreground/60 max-w-xs mx-auto leading-relaxed">
+              Rooms & Events will populate once the game server backend is connected.
+            </p>
+          </div>
         )}
 
         {/* Players */}
@@ -384,7 +558,9 @@ export default function HaveFun() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredPlayers.map(u => <PlayerCard key={u.id} user={u} />)}
+                {filteredPlayers.map(u => (
+                  <PlayerCard key={u.id} user={u} onClick={() => setSelectedPlayer(u)} />
+                ))}
               </div>
             )}
           </>

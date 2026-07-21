@@ -75,6 +75,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "otpauth": "^9.5.1",
     "qrcode.react": "^4.2.0"
   }
 }

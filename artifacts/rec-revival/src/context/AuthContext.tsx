@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import * as OTPAuth from 'otpauth';
 
 export type UserRole = 'user' | 'mod' | 'owner';
 
@@ -10,6 +11,7 @@ export interface User {
   bio: string;
   profileIcon: string;      // legacy – kept for compat
   profileImage: string;     // data URL or '' for default avatar
+  bannerImage: string;      // data URL or '' for no banner
   following: string[];      // list of user IDs this user follows
   lastSeen: number;         // unix ms; updated by heartbeat while online
   has2FA: boolean;
@@ -38,7 +40,7 @@ interface AuthContextType {
   verify2FA: (code: string) => { success: boolean; error?: string };
   useBackupCode: (code: string) => { success: boolean; error?: string };
   signOut: () => void;
-  updateUser: (updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage'>>) => void;
+  updateUser: (updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage' | 'bannerImage'>>) => void;
   deleteAccount: () => void;
   enable2FA: () => { seed: string; backupCodes: string[] };
   confirm2FAEnable: (seed: string, backupCodes: string[], code: string) => { success: boolean; error?: string };
@@ -74,6 +76,7 @@ function migrateUser(u: Partial<User>): User {
     bio: u.bio ?? '',
     profileIcon: u.profileIcon ?? '',
     profileImage: u.profileImage ?? '',
+    bannerImage: u.bannerImage ?? '',
     following: u.following ?? [],
     lastSeen: u.lastSeen ?? 0,
     has2FA: u.has2FA ?? false,
@@ -109,13 +112,17 @@ function genId() {
 }
 
 function getTOTPCode(seed: string): string {
-  const bucket = Math.floor(Date.now() / 30000);
-  let hash = 0;
-  const combined = seed + ':' + bucket;
-  for (let i = 0; i < combined.length; i++) {
-    hash = ((hash << 5) - hash + combined.charCodeAt(i)) | 0;
+  try {
+    const totp = new OTPAuth.TOTP({
+      secret: OTPAuth.Secret.fromBase32(seed),
+      digits: 6,
+      period: 30,
+      algorithm: 'SHA1',
+    });
+    return totp.generate();
+  } catch {
+    return '------';
   }
-  return String(Math.abs(hash) % 1000000).padStart(6, '0');
 }
 
 function getEmailCode(userId: string): string {
@@ -129,7 +136,21 @@ function getEmailCode(userId: string): string {
 }
 
 function generateSeed(): string {
-  return (Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2)).toUpperCase();
+  // Must be valid base32 (A-Z, 2-7) for TOTP compatibility with Google Authenticator / Authy
+  const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  let bits = 0, value = 0, output = '';
+  for (let i = 0; i < bytes.length; i++) {
+    value = (value << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 5) {
+      output += BASE32[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += BASE32[(value << (5 - bits)) & 31];
+  return output;
 }
 
 function generateBackupCodes(): string[] {
@@ -251,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, currentUserId: null, pending2FAUserId: null }));
   }, []);
 
-  const updateUser = useCallback((updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage'>>) => {
+  const updateUser = useCallback((updates: Partial<Pick<User, 'username' | 'password' | 'email' | 'bio' | 'isAdmin' | 'profileIcon' | 'profileImage' | 'bannerImage'>>) => {
     setState(s => ({
       ...s,
       users: s.users.map(u => u.id === s.currentUserId ? { ...u, ...updates } : u),

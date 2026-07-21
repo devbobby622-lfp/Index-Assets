@@ -112,16 +112,27 @@ export default function Support() {
                 We are hosting a mirror of the Recagain archive and working to make it fully
                 searchable and browsable. If you have content to contribute, reach out via Discord.
               </p>
-              <a
-                href="https://recroom.baby"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-6 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
-                style={{ boxShadow: '0 8px 24px hsl(var(--primary) / 0.25)' }}
-              >
-                Visit recroom.baby
-                <ExternalLink className="w-4 h-4" />
-              </a>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <a
+                  href="https://recroom.baby"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition-opacity"
+                  style={{ boxShadow: '0 8px 24px hsl(var(--primary) / 0.25)' }}
+                >
+                  Visit recroom.baby
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://recagain.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-card border border-border px-5 py-2.5 rounded-full text-sm font-bold hover:border-primary/50 transition-colors"
+                >
+                  Visit Recagain
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

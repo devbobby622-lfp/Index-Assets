@@ -4,6 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { usePrefs } from '@/context/PrefsContext';
 import { useMusic } from '@/context/MusicContext';
 import { QRCodeSVG } from 'qrcode.react';
+import * as OTPAuth from 'otpauth';
+import albumArt from '@assets/Screenshot_2026-07-20_202358_1784593492069.png';
 import Avatar from '@/components/Avatar';
 import {
   ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff, Trash2, LogOut,
@@ -64,8 +66,8 @@ function MiniPlayer() {
     <div className="px-6 py-5">
       {/* Track info */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-lg">🎵</span>
+        <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 overflow-hidden flex-shrink-0">
+          <img src={albumArt} alt="Album art" className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-black text-sm truncate">OOBE Theme</p>
@@ -141,8 +143,15 @@ function TwoFASetupModal({ onClose }: { onClose: () => void }) {
   const [copied, setCopied] = useState<number | null>(null);
   const [currentTOTP, setCurrentTOTP] = useState(() => getTOTPCode(setupData.seed));
 
-  // Build an otpauth URI for the QR code
-  const otpauthUri = `otpauth://totp/RecRoomRevival:${encodeURIComponent(currentUser?.username ?? 'User')}?secret=${setupData.seed}&issuer=RecRoomRevival&algorithm=SHA1&digits=6&period=30`;
+  // Build a standard otpauth URI compatible with Google Authenticator / Authy
+  const otpauthUri = new OTPAuth.TOTP({
+    issuer: 'RecRoomRevival',
+    label: currentUser?.username ?? 'User',
+    secret: OTPAuth.Secret.fromBase32(setupData.seed),
+    digits: 6,
+    period: 30,
+    algorithm: 'SHA1',
+  }).toString();
 
   useEffect(() => {
     const id = setInterval(() => setCurrentTOTP(getTOTPCode(setupData.seed)), 1000);
@@ -322,6 +331,7 @@ export default function Settings() {
   const { prefs, setPrefs } = usePrefs();
   const [, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const [username, setUsername] = useState(currentUser?.username ?? '');
   const [email, setEmail] = useState(currentUser?.email ?? '');
@@ -365,7 +375,21 @@ export default function Settings() {
     e.target.value = '';
   };
 
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target?.result as string;
+      updateUser({ bannerImage: dataUrl });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const clearAvatar = () => updateUser({ profileImage: '' });
+  const clearBanner = () => updateUser({ bannerImage: '' });
 
   const handleSave = useCallback(() => {
     setSaveError('');
@@ -395,8 +419,9 @@ export default function Settings() {
       {show2FASetup && <TwoFASetupModal onClose={() => setShow2FASetup(false)} />}
       {showDeleteAuth && <DeleteAuthModal onClose={() => setShowDeleteAuth(false)} />}
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
 
       <div className="max-w-2xl mx-auto px-6 py-14">
         {/* Header with clickable avatar */}
@@ -440,6 +465,30 @@ export default function Settings() {
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 block">Bio</label>
               <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={300} placeholder="Tell the community a little about yourself…" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-primary transition-colors resize-none" />
               <p className="text-xs text-muted-foreground mt-1 text-right">{bio.length}/300</p>
+            </div>
+
+            {/* Banner image */}
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 block">Profile Banner</label>
+              {currentUser.bannerImage ? (
+                <div className="relative rounded-2xl overflow-hidden border border-border mb-2 h-28">
+                  <img src={currentUser.bannerImage} alt="Banner" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute bottom-2 right-2 flex gap-2">
+                    <button type="button" onClick={() => bannerInputRef.current?.click()} className="text-xs bg-black/50 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-black/70 backdrop-blur-sm">Change</button>
+                    <button type="button" onClick={clearBanner} className="text-xs bg-red-500/70 text-white px-2.5 py-1 rounded-lg font-bold hover:bg-red-500/90 backdrop-blur-sm">Remove</button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="w-full h-20 border border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors text-sm font-bold"
+                >
+                  <Camera className="w-4 h-4" /> Upload Banner Image
+                </button>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">Shown on your public profile in the Players tab.</p>
             </div>
           </div>
         </Section>

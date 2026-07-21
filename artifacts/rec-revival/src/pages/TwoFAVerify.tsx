@@ -84,7 +84,7 @@ export default function TwoFAVerify() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 pt-16">
       <Link href="/" className="mb-8">
-        <img src={`${import.meta.env.BASE_URL}recroom-logo.png`} alt="Rec Room Revival" className="h-16 w-auto object-contain" />
+        <img src={`${import.meta.env.BASE_URL}recroom-logo.png`} alt="Rec Room Revival" className="h-28 w-auto object-contain" />
       </Link>
 
       <div className="w-full max-w-sm">

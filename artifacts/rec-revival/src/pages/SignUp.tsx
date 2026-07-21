@@ -33,7 +33,7 @@ export default function SignUp() {
         <img
           src={`${import.meta.env.BASE_URL}recroom-logo.png`}
           alt="Rec Room Revival"
-          className="h-16 w-auto object-contain"
+          className="h-28 w-auto object-contain"
         />
       </Link>
 

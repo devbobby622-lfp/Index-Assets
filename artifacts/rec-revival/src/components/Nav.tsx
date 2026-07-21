@@ -42,7 +42,7 @@ export default function Nav() {
             <img
               src={`${import.meta.env.BASE_URL}recroom-logo.png`}
               alt="Rec Room Revival"
-              className="h-9 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </Link>
 
