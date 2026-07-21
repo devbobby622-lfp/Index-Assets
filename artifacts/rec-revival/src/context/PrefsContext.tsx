@@ -3,6 +3,9 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface Prefs {
   bloomEnabled: boolean;
   bloomIntensity: number; // 0–1
+  assistantEnabled: boolean;
+  uiTransparencyEnabled: boolean;
+  uiTransparency: number; // 0–1, how transparent UI panels are
 }
 
 interface PrefsContextType {
@@ -11,7 +14,13 @@ interface PrefsContextType {
 }
 
 const PREFS_KEY = 'rr_prefs_v1';
-const defaults: Prefs = { bloomEnabled: true, bloomIntensity: 0.25 };
+const defaults: Prefs = {
+  bloomEnabled: true,
+  bloomIntensity: 0.25,
+  assistantEnabled: false,
+  uiTransparencyEnabled: false,
+  uiTransparency: 0.5,
+};
 
 function loadPrefs(): Prefs {
   try {
@@ -31,6 +40,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     const intensity = prefs.bloomEnabled ? prefs.bloomIntensity : 0;
     document.documentElement.style.setProperty('--bloom-intensity', intensity.toString());
   }, [prefs.bloomEnabled, prefs.bloomIntensity]);
+
+  // Apply UI transparency
+  useEffect(() => {
+    const opacity = prefs.uiTransparencyEnabled ? 1 - prefs.uiTransparency : 1;
+    document.documentElement.style.setProperty('--ui-panel-opacity', opacity.toString());
+  }, [prefs.uiTransparencyEnabled, prefs.uiTransparency]);
 
   const setPrefs = (p: Partial<Prefs>) => {
     setPrefsState(prev => {

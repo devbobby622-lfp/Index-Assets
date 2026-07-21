@@ -1,29 +1,5 @@
 import { Link } from 'wouter';
-import { Download, ArrowRight, Wrench, LogIn, CheckCircle } from 'lucide-react';
-
-const steps = [
-  {
-    num: '01',
-    icon: <Download className="w-6 h-6" />,
-    title: 'Get the original client',
-    desc: 'You need the 2020 Rec Room APK (Android) or IPA (iOS). Do not download the current version from the app store — it will not work with our server.',
-    note: 'Search for "Rec Room 2020 APK" or ask in our Discord for a verified download link.',
-  },
-  {
-    num: '02',
-    icon: <Wrench className="w-6 h-6" />,
-    title: 'Redirect traffic to our server',
-    desc: 'The app needs to talk to our server instead of the official servers. You can do this by editing your device\'s hosts file or using a proxy app.',
-    note: 'Android users: use hosts file editor (requires root) or a VPN/proxy app. iOS users: use a hosts manager or DNS profile.',
-  },
-  {
-    num: '03',
-    icon: <LogIn className="w-6 h-6" />,
-    title: 'Log in and play',
-    desc: 'Open the app, log in with any credentials (create an account if you don\'t have one), and you\'ll be in. Your rooms, profile, and data save to our server.',
-    note: 'If the app asks to update, decline. You must stay on the 2020 client version.',
-  },
-];
+import { ArrowRight, CheckCircle, MessageSquare, Search } from 'lucide-react';
 
 const serverInfo = [
   { label: 'Base URL', value: 'https://rec.net' },
@@ -51,8 +27,7 @@ export default function Instructions() {
             How to <span className="text-primary">Play</span>
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Three steps to get back into the 2020 Rec Room. The whole process takes about 10
-            minutes.
+            Two steps to get the original Rec Room build. Takes less than a minute.
           </p>
         </div>
       </section>
@@ -60,39 +35,79 @@ export default function Instructions() {
       {/* Steps */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          {steps.map((s, i) => (
-            <div
-              key={s.num}
-              className="bg-card border border-border rounded-3xl p-8"
-              style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-            >
-              <div className="flex items-start gap-6">
-                <div
-                  className="text-5xl font-black leading-none flex-shrink-0"
-                  style={{ color: 'hsl(var(--primary) / 0.2)' }}
-                >
-                  {s.num}
+
+          {/* Step 1 */}
+          <div
+            className="bg-card border border-border rounded-3xl p-8"
+            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+          >
+            <div className="flex items-start gap-6">
+              <div
+                className="text-5xl font-black leading-none flex-shrink-0"
+                style={{ color: 'hsl(var(--primary) / 0.2)' }}
+              >
+                01
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <MessageSquare className="w-6 h-6 text-primary" />
+                  <h2 className="font-black text-xl">Join the Discord server</h2>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="text-primary">{s.icon}</div>
-                    <h2 className="font-black text-xl">{s.title}</h2>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed mb-4">{s.desc}</p>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  Join the Rec Room Early Builds Discord server — this is where all builds and
+                  community support live.
+                </p>
+                <a
+                  href="https://discord.gg/AXZfuaqSbc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#5865F2] text-white px-5 py-3 rounded-2xl font-bold text-sm hover:opacity-90 transition-opacity"
+                  style={{ boxShadow: '0 8px 24px rgba(88,101,242,0.35)' }}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Join — discord.gg/AXZfuaqSbc
+                </a>
+              </div>
+            </div>
+            <div className="flex justify-center mt-6">
+              <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div
+            className="bg-card border border-border rounded-3xl p-8"
+            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+          >
+            <div className="flex items-start gap-6">
+              <div
+                className="text-5xl font-black leading-none flex-shrink-0"
+                style={{ color: 'hsl(var(--primary) / 0.2)' }}
+              >
+                02
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <Search className="w-6 h-6 text-primary" />
+                  <h2 className="font-black text-xl">Find your build</h2>
+                </div>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  Look for builds in the channel that matches your device:
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
-                    <p className="text-sm text-primary font-bold">
-                      Tip: {s.note}
-                    </p>
+                    <p className="text-sm font-black text-primary mb-0.5">#android-builds</p>
+                    <p className="text-xs text-muted-foreground">For Android phones and tablets</p>
+                  </div>
+                  <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                    <p className="text-sm font-black text-primary mb-0.5">#pc-builds</p>
+                    <p className="text-xs text-muted-foreground">For Windows and Mac computers</p>
                   </div>
                 </div>
               </div>
-              {i < steps.length - 1 && (
-                <div className="flex justify-center mt-6">
-                  <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
-                </div>
-              )}
             </div>
-          ))}
+          </div>
+
         </div>
       </section>
 

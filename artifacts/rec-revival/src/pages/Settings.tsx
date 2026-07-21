@@ -10,7 +10,8 @@ import Avatar from '@/components/Avatar';
 import {
   ShieldCheck, ShieldOff, KeyRound, Eye, EyeOff, Trash2, LogOut,
   Save, Copy, Check, Moon, Sun, Bell, Globe, ShieldAlert, User, Lock,
-  Sparkles, Camera, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward
+  Sparkles, Camera, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward,
+  Bot, Layers
 } from 'lucide-react';
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
@@ -527,6 +528,50 @@ export default function Settings() {
         {/* ── Extras ── */}
         <Section title="Extras">
           <MiniPlayer />
+
+          {/* RecBuild Assistant toggle */}
+          <Row>
+            <div className="flex items-center gap-3">
+              <Bot className="w-5 h-5 text-primary" />
+              <div>
+                <p className="font-bold text-sm">RecBuild Assistant</p>
+                <p className="text-xs text-muted-foreground">Floating chat bot (disabled by default)</p>
+              </div>
+            </div>
+            <Toggle checked={prefs.assistantEnabled} onChange={v => setPrefs({ assistantEnabled: v })} />
+          </Row>
+
+          {/* UI Transparency toggle */}
+          <Row>
+            <div className="flex items-center gap-3">
+              <Layers className="w-5 h-5 text-primary" />
+              <div>
+                <p className="font-bold text-sm">UI Transparency</p>
+                <p className="text-xs text-muted-foreground">Make panels semi-transparent (disabled by default)</p>
+              </div>
+            </div>
+            <Toggle checked={prefs.uiTransparencyEnabled} onChange={v => setPrefs({ uiTransparencyEnabled: v })} />
+          </Row>
+
+          {prefs.uiTransparencyEnabled && (
+            <div className="px-6 py-4 border-b border-border last:border-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-muted-foreground">Transparency level</span>
+                <span className="text-xs font-black text-primary">{Math.round(prefs.uiTransparency * 100)}%</span>
+              </div>
+              <input
+                type="range" min={0} max={0.85} step={0.05}
+                value={prefs.uiTransparency}
+                onChange={e => setPrefs({ uiTransparency: Number(e.target.value) })}
+                className="w-full h-1.5 rounded-full"
+                style={{ accentColor: 'hsl(var(--primary))' }}
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-muted-foreground">Subtle</span>
+                <span className="text-[10px] text-muted-foreground">Very transparent</span>
+              </div>
+            </div>
+          )}
         </Section>
 
         {/* ── Appearance ── */}

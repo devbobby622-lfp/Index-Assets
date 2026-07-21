@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Bot, ChevronRight, RotateCcw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { usePrefs } from '@/context/PrefsContext';
 import { useLocation } from 'wouter';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -309,6 +310,7 @@ function Markdown({ text }: { text: string }) {
 
 // ── Main widget ───────────────────────────────────────────────────────────────
 export default function RecBuildAssistant() {
+  const { prefs } = usePrefs();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [input, setInput] = useState('');
@@ -372,6 +374,8 @@ export default function RecBuildAssistant() {
     e.preventDefault();
     handleSend(input);
   };
+
+  if (!prefs.assistantEnabled) return null;
 
   return (
     <>
