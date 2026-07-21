@@ -89,7 +89,7 @@ export default function Instructions() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <Search className="w-6 h-6 text-primary" />
-                  <h2 className="font-black text-xl">File, Format</h2>
+                  <h2 className="font-black text-xl">Find your build</h2>
                 </div>
                 <p className="text-muted-foreground leading-relaxed mb-4">
                   Look for builds in the channel that matches your operating system:
