@@ -4,8 +4,8 @@ interface Prefs {
   bloomEnabled: boolean;
   bloomIntensity: number; // 0–1
   assistantEnabled: boolean;
-  uiTransparencyEnabled: boolean;
-  uiTransparency: number; // 0–1, how transparent UI panels are
+  uiReflectionEnabled: boolean;
+  uiReflectionIntensity: number; // 0–1, glossy sheen on UI panels
 }
 
 interface PrefsContextType {
@@ -18,8 +18,8 @@ const defaults: Prefs = {
   bloomEnabled: true,
   bloomIntensity: 0.25,
   assistantEnabled: false,
-  uiTransparencyEnabled: false,
-  uiTransparency: 0.5,
+  uiReflectionEnabled: false,
+  uiReflectionIntensity: 0.4,
 };
 
 function loadPrefs(): Prefs {
@@ -40,6 +40,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     const intensity = prefs.bloomEnabled ? prefs.bloomIntensity : 0;
     document.documentElement.style.setProperty('--bloom-intensity', intensity.toString());
   }, [prefs.bloomEnabled, prefs.bloomIntensity]);
+
+  // Apply UI reflection intensity
+  useEffect(() => {
+    const intensity = prefs.uiReflectionEnabled ? prefs.uiReflectionIntensity : 0;
+    document.documentElement.style.setProperty('--ui-reflection-intensity', intensity.toString());
+  }, [prefs.uiReflectionEnabled, prefs.uiReflectionIntensity]);
 
   const setPrefs = (p: Partial<Prefs>) => {
     setPrefsState(prev => {

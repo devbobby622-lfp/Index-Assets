@@ -541,34 +541,34 @@ export default function Settings() {
             <Toggle checked={prefs.assistantEnabled} onChange={v => setPrefs({ assistantEnabled: v })} />
           </Row>
 
-          {/* UI Transparency toggle */}
+          {/* UI Reflection toggle */}
           <Row>
             <div className="flex items-center gap-3">
               <Layers className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-bold text-sm">UI Transparency</p>
-                <p className="text-xs text-muted-foreground">Make panels semi-transparent (disabled by default)</p>
+                <p className="font-bold text-sm">UI Reflection</p>
+                <p className="text-xs text-muted-foreground">Glossy sheen on panels (disabled by default)</p>
               </div>
             </div>
-            <Toggle checked={prefs.uiTransparencyEnabled} onChange={v => setPrefs({ uiTransparencyEnabled: v })} />
+            <Toggle checked={prefs.uiReflectionEnabled} onChange={v => setPrefs({ uiReflectionEnabled: v })} />
           </Row>
 
-          {prefs.uiTransparencyEnabled && (
+          {prefs.uiReflectionEnabled && (
             <div className="px-6 py-4 border-b border-border last:border-0">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-muted-foreground">Transparency level</span>
-                <span className="text-xs font-black text-primary">{Math.round(prefs.uiTransparency * 100)}%</span>
+                <span className="text-xs font-bold text-muted-foreground">Reflection intensity</span>
+                <span className="text-xs font-black text-primary">{Math.round(prefs.uiReflectionIntensity * 100)}%</span>
               </div>
               <input
-                type="range" min={0} max={0.85} step={0.05}
-                value={prefs.uiTransparency}
-                onChange={e => setPrefs({ uiTransparency: Number(e.target.value) })}
+                type="range" min={0} max={1} step={0.05}
+                value={prefs.uiReflectionIntensity}
+                onChange={e => setPrefs({ uiReflectionIntensity: Number(e.target.value) })}
                 className="w-full h-1.5 rounded-full"
                 style={{ accentColor: 'hsl(var(--primary))' }}
               />
               <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-muted-foreground">Subtle</span>
-                <span className="text-[10px] text-muted-foreground">Very transparent</span>
+                <span className="text-[10px] text-muted-foreground">Matte</span>
+                <span className="text-[10px] text-muted-foreground">Glossy</span>
               </div>
             </div>
           )}
