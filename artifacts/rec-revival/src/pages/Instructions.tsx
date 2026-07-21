@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { ArrowRight, CheckCircle, MessageSquare, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle, DownloadIcon, MessageSquare, Search } from 'lucide-react';
 
 const serverInfo = [
   { label: 'Base URL', value: 'https://rec.net' },
@@ -27,7 +27,7 @@ export default function Instructions() {
             How to <span className="text-primary">Play</span>
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Two steps to get the original Rec Room build. Takes less than a minute.
+            Three steps to get the original Rec Room build. Takes less than a minute.
           </p>
         </div>
       </section>
@@ -92,7 +92,7 @@ export default function Instructions() {
                   <h2 className="font-black text-xl">Find your build</h2>
                 </div>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  Look for builds in the channel that matches your device:
+                  Look for builds in the channel that matches your operating system:
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
@@ -104,6 +104,30 @@ export default function Instructions() {
                     <p className="text-xs text-muted-foreground">For Windows and Mac computers</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div
+            className="bg-card border border-border rounded-3xl p-8"
+            style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+          >
+            <div className="flex items-start gap-6">
+              <div
+                className="text-5xl font-black leading-none flex-shrink-0"
+                style={{ color: 'hsl(var(--primary) / 0.2)' }}
+              >
+                03
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <DownloadIcon className="w-6 h-6 text-primary" />
+                  <h2 className="font-black text-xl">Run the apk/exe</h2>
+                </div>
+                <p className="text-muted-foreground leading-relaxed mb-4">
+                  Enjoy the 2020 build
+                </p>
               </div>
             </div>
           </div>
