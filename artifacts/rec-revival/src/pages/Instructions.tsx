@@ -31,7 +31,6 @@ export default function Instructions() {
           </p>
         </div>
       </section>
-
       {/* Steps */}
       <section className="py-16 px-6">
         <div className="max-w-3xl mx-auto space-y-6">
@@ -91,9 +90,7 @@ export default function Instructions() {
                   <Search className="w-6 h-6 text-primary" />
                   <h2 className="font-black text-xl">Find your build</h2>
                 </div>
-                <p className="text-muted-foreground leading-relaxed mb-4">
-                  Look for builds in the channel that matches your operating system:
-                </p>
+                <p className="text-muted-foreground leading-relaxed mb-4">Look for builds in the channel that matches your File Format:</p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
                     <p className="text-sm font-black text-primary mb-0.5">#android-builds</p>
@@ -134,7 +131,6 @@ export default function Instructions() {
 
         </div>
       </section>
-
       {/* Server info */}
       <section className="py-10 px-6 bg-card/40 border-y border-border">
         <div className="max-w-3xl mx-auto">
@@ -151,7 +147,6 @@ export default function Instructions() {
           </div>
         </div>
       </section>
-
       {/* Done state */}
       <section className="py-16 px-6 text-center">
         <div className="max-w-xl mx-auto">
@@ -178,7 +173,6 @@ export default function Instructions() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="border-t border-border py-10 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
