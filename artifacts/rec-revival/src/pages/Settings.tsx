@@ -463,6 +463,23 @@ export default function Settings() {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-primary transition-colors" />
             </div>
             <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> New Password</label>
+              <div className="relative">
+                <input type={showPass ? 'text' : 'password'} value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Leave blank to keep current"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-10 text-sm font-medium outline-none focus:border-primary transition-colors" />
+                <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            {newPass && (
+              <div>
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 block">Confirm New Password</label>
+                <input type={showPass ? 'text' : 'password'} value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-primary transition-colors" />
+              </div>
+            )}
+            <div>
               <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 block">Bio</label>
               <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={300} placeholder="Tell the community a little about yourself…" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-primary transition-colors resize-none" />
               <p className="text-xs text-muted-foreground mt-1 text-right">{bio.length}/300</p>
@@ -493,37 +510,6 @@ export default function Settings() {
             </div>
           </div>
         </Section>
-
-        {/* ── Password ── */}
-        <Section title="Change Password">
-          <div className="px-6 py-5 space-y-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> New Password</label>
-              <div className="relative">
-                <input type={showPass ? 'text' : 'password'} value={newPass} onChange={e => setNewPass(e.target.value)} placeholder="Leave blank to keep current"
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 pr-10 text-sm font-medium outline-none focus:border-primary transition-colors" />
-                <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            {newPass && (
-              <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1.5 block">Confirm New Password</label>
-                <input type={showPass ? 'text' : 'password'} value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-primary transition-colors" />
-              </div>
-            )}
-          </div>
-        </Section>
-
-        {/* Save */}
-        <div className="mb-4">
-          {saveError && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 mb-3">{saveError}</p>}
-          <button onClick={handleSave} className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-2xl font-black hover:opacity-90 transition-opacity" style={{ boxShadow: '0 8px 24px hsl(var(--primary)/0.3)' }}>
-            {saved ? <><Check className="w-4 h-4" /> Saved!</> : <><Save className="w-4 h-4" /> Save Changes</>}
-          </button>
-        </div>
 
         {/* ── Extras ── */}
         <Section title="Extras">
@@ -727,6 +713,14 @@ export default function Settings() {
             )}
           </div>
         </Section>
+
+        {/* Save */}
+        <div className="mb-4">
+          {saveError && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 mb-3">{saveError}</p>}
+          <button onClick={handleSave} className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-2xl font-black hover:opacity-90 transition-opacity" style={{ boxShadow: '0 8px 24px hsl(var(--primary)/0.3)' }}>
+            {saved ? <><Check className="w-4 h-4" /> Saved!</> : <><Save className="w-4 h-4" /> Save Setting Changes</>}
+          </button>
+        </div>
       </div>
     </div>
   );
