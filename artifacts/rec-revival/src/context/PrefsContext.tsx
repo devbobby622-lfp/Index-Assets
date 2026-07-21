@@ -41,12 +41,6 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
     document.documentElement.style.setProperty('--bloom-intensity', intensity.toString());
   }, [prefs.bloomEnabled, prefs.bloomIntensity]);
 
-  // Apply UI transparency
-  useEffect(() => {
-    const opacity = prefs.uiTransparencyEnabled ? 1 - prefs.uiTransparency : 1;
-    document.documentElement.style.setProperty('--ui-panel-opacity', opacity.toString());
-  }, [prefs.uiTransparencyEnabled, prefs.uiTransparency]);
-
   const setPrefs = (p: Partial<Prefs>) => {
     setPrefsState(prev => {
       const next = { ...prev, ...p };

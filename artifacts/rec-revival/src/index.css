@@ -176,51 +176,6 @@
   }
 
   /* ── UI Transparency ──────────────────────────────────── */
-  /* When enabled (--ui-panel-opacity < 1), surfaces get a   */
-  /* frosted-glass look: semi-transparent backgrounds + blur */
-  /* Text stays fully opaque — only the background fades.    */
-
-  /* Main card / panel / surface backgrounds */
-  .bg-card,
-  .bg-popover,
-  .bg-sidebar,
-  .rr-card {
-    background-color: hsl(var(--card) / var(--ui-panel-opacity, 1));
-    backdrop-filter: blur(calc((1 - var(--ui-panel-opacity, 1)) * 16px));
-  }
-  .bg-muted {
-    background-color: hsl(var(--muted) / var(--ui-panel-opacity, 1));
-    backdrop-filter: blur(calc((1 - var(--ui-panel-opacity, 1)) * 16px));
-  }
-
-  /* Button variant backgrounds — fade without affecting text */
-  button.bg-primary, [role="button"].bg-primary {
-    background-color: hsl(var(--primary) / var(--ui-panel-opacity, 1));
-  }
-  button.bg-secondary, [role="button"].bg-secondary {
-    background-color: hsl(var(--secondary) / var(--ui-panel-opacity, 1));
-  }
-  button.bg-destructive, [role="button"].bg-destructive {
-    background-color: hsl(var(--destructive) / var(--ui-panel-opacity, 1));
-  }
-  button.bg-card, [role="button"].bg-card {
-    background-color: hsl(var(--card) / var(--ui-panel-opacity, 1));
-  }
-
-  /* Nav stays fully solid — background, blur, opacity all revert */
-  nav, nav * {
-    background-color: revert !important;
-    backdrop-filter: revert !important;
-    opacity: revert !important;
-  }
-
-  /* Toasts, modals, overlays stay fully opaque */
-  [data-sonner-toaster],
-  [role="dialog"] {
-    background-color: revert !important;
-    backdrop-filter: none !important;
-    opacity: revert !important;
-  }
 }
 
 @layer utilities {
