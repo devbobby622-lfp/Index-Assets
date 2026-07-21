@@ -6,6 +6,7 @@ import { PrefsProvider } from '@/context/PrefsContext';
 import Nav from '@/components/Nav';
 import MusicPlayer from '@/components/MusicPlayer';
 import RecBuildAssistant from '@/components/RecBuildAssistant';
+import SplashScreen from '@/components/SplashScreen';
 import Home from '@/pages/Home';
 import HaveFun from '@/pages/HaveFun';
 import Support from '@/pages/Support';
@@ -49,6 +50,7 @@ export default function App() {
           </MusicProvider>
         </PostsProvider>
       </AuthProvider>
+      <SplashScreen />
     </PrefsProvider>
   );
 }

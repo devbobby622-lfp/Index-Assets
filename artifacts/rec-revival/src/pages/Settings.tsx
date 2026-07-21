@@ -421,7 +421,7 @@ export default function Settings() {
 
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-      <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
+      <input ref={bannerInputRef} type="file" accept="image/*,.gif" className="hidden" onChange={handleBannerChange} />
 
       <div className="max-w-2xl mx-auto px-6 py-14">
         {/* Header with clickable avatar */}
