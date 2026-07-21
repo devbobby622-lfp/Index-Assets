@@ -4,7 +4,6 @@ import { MusicProvider } from '@/context/MusicContext';
 import { PostsProvider } from '@/context/PostsContext';
 import { PrefsProvider } from '@/context/PrefsContext';
 import Nav from '@/components/Nav';
-import MusicPlayer from '@/components/MusicPlayer';
 import RecBuildAssistant from '@/components/RecBuildAssistant';
 import SplashScreen from '@/components/SplashScreen';
 import Home from '@/pages/Home';
@@ -32,7 +31,6 @@ function Router() {
         <Route path="/verify-2fa" component={TwoFAVerify} />
         <Route component={NotFound} />
       </Switch>
-      <MusicPlayer />
       <RecBuildAssistant />
     </>
   );
