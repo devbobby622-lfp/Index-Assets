@@ -8,7 +8,6 @@ import {
   Server,
   ArrowRight,
 } from 'lucide-react';
-import PlayersOnline from '@/components/PlayersOnline';
 
 /* ── Scroll reveal helper ── */
 function useScrollReveal() {
@@ -227,13 +226,6 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-background/20 to-transparent" />
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ── WHO'S ONLINE ── */}
-      <section className="py-10 px-6">
-        <div className="max-w-sm mx-auto">
-          <PlayersOnline />
         </div>
       </section>
 

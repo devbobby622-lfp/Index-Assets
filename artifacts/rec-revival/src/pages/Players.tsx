@@ -49,8 +49,12 @@ function PlayerCard({
       onClick={onClick}
       className="relative flex flex-col text-left rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all overflow-hidden group"
     >
-      {/* Banner gradient */}
-      <div className="h-16 bg-gradient-to-br from-purple-900/60 via-blue-900/60 to-indigo-900/60" />
+      {/* Banner */}
+      {player.bannerImage ? (
+        <div className="h-16 bg-cover bg-center" style={{ backgroundImage: `url(${player.bannerImage})` }} />
+      ) : (
+        <div className="h-16 bg-gradient-to-br from-purple-900/60 via-blue-900/60 to-indigo-900/60" />
+      )}
 
       {/* Avatar */}
       <div className="px-4 pb-4">

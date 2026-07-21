@@ -1,4 +1,28 @@
-import { ExternalLink, Archive, HelpCircle, FileText } from 'lucide-react';
+import { ExternalLink, Archive, HelpCircle, FileText, X } from 'lucide-react';
+import { useState } from 'react';
+
+const faqs = [
+  {
+    q: 'What is Rec Room Revival?',
+    a: 'A community-run server project that brings back the 2020 Rec Room experience — custom rooms, original profiles, and the social features that made it special.',
+  },
+  {
+    q: 'Is this official?',
+    a: 'No. Rec Room Revival is a fan project and is not affiliated with Against Gravity, the creators of Rec Room. It is run by fans, completely free.',
+  },
+  {
+    q: 'How do I connect?',
+    a: 'You need the original 2020 Rec Room client. Once you have it, redirect rec.net traffic to our server using a hosts patch or redirect tool, then log in with your account.',
+  },
+  {
+    q: 'Can I use my old account?',
+    a: 'Yes. Create an account on this site, then use the same username and password in the 2020 client. Your profile, rooms, and settings are saved to your browser.',
+  },
+  {
+    q: 'Why is the site asking for a 2FA code?',
+    a: 'If you enabled 2FA in Settings, you will need to enter the code from your authenticator app each time you sign in. Keep your backup codes safe.',
+  },
+];
 
 const resources = [
   {
@@ -19,12 +43,14 @@ const resources = [
     icon: <FileText className="w-6 h-6" />,
     title: 'FAQ',
     desc: 'Common questions answered — from client compatibility to account issues and everything in between.',
-    link: '#',
+    onClick: () => setFaqOpen(true),
     linkLabel: 'Read FAQ',
   },
 ];
 
 export default function Support() {
+  const [faqOpen, setFaqOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background text-foreground pt-16">
       <section className="py-28 px-6">
@@ -54,12 +80,21 @@ export default function Support() {
                 <div className="text-primary mb-4">{r.icon}</div>
                 <h3 className="font-black text-lg mb-3">{r.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6 flex-1">{r.desc}</p>
-                <a
-                  href={r.link}
-                  className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:opacity-80 transition-opacity"
-                >
-                  {r.linkLabel} <ExternalLink className="w-4 h-4" />
-                </a>
+                {r.onClick ? (
+                  <button
+                    onClick={r.onClick}
+                    className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:opacity-80 transition-opacity"
+                  >
+                    {r.linkLabel} <ExternalLink className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <a
+                    href={r.link}
+                    className="inline-flex items-center gap-2 text-primary font-bold text-sm hover:opacity-80 transition-opacity"
+                  >
+                    {r.linkLabel} <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -137,6 +172,35 @@ export default function Support() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Modal */}
+      {faqOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setFaqOpen(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-2xl max-h-[80vh] overflow-y-auto bg-card border border-border rounded-3xl p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black">Frequently Asked Questions</h2>
+              <button
+                onClick={() => setFaqOpen(false)}
+                className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {faqs.map((f, i) => (
+                <div key={i} className="bg-card/40 border border-border rounded-2xl p-4">
+                  <h3 className="font-bold text-sm mb-1">{f.q}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-border py-10 px-6">

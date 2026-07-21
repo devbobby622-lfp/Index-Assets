@@ -7,6 +7,7 @@ export interface PresenceUser {
   username: string;
   bio: string;
   profileImage: string;
+  bannerImage: string;
   role: string;
   isAdmin: boolean;
   joinedAt: number;

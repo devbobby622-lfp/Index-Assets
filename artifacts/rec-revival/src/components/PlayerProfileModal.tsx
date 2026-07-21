@@ -66,14 +66,25 @@ export default function PlayerProfileModal({ player, onClose }: Props) {
           className="relative z-10 w-full max-w-md rounded-2xl bg-[#111] border border-white/10 overflow-hidden shadow-2xl"
         >
           {/* Banner */}
-          <div className="h-24 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative">
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors bg-black/40 rounded-full p-1"
-            >
-              <X size={16} />
-            </button>
-          </div>
+          {player.bannerImage ? (
+            <div className="h-24 bg-cover bg-center relative" style={{ backgroundImage: `url(${player.bannerImage})` }}>
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors bg-black/40 rounded-full p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="h-24 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative">
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 text-white/60 hover:text-white transition-colors bg-black/40 rounded-full p-1"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
 
           {/* Avatar (overlaps banner) */}
           <div className="px-5 pb-5">

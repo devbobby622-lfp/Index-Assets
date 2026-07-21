@@ -16,6 +16,7 @@ export interface OnlinePlayer {
   username: string;
   bio: string;
   profileImage: string;
+  bannerImage: string;
   role: string;
   isAdmin: boolean;
   joinedAt: number;
@@ -43,6 +44,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       username: currentUser.username,
       bio: currentUser.bio,
       profileImage: currentUser.profileImage,
+      bannerImage: currentUser.bannerImage,
       role: currentUser.role,
       isAdmin: currentUser.isAdmin,
     };

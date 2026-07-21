@@ -53,6 +53,7 @@ const UNIT_MS: Record<DurationUnit, number> = {
 function PlayerRow({ user, currentUserId }: { user: User; currentUserId: string }) {
   const { setUserRole, banUser, unbanUser, deleteUser, disableUser2FA } = useAuth();
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [banAmount, setBanAmount] = useState('1');
   const [banUnit, setBanUnit] = useState<DurationUnit>('hours');
   const [kickAmount, setKickAmount] = useState('60');
@@ -75,9 +76,15 @@ function PlayerRow({ user, currentUserId }: { user: User; currentUserId: string 
   return (
     <div className={`rounded-2xl border transition-colors ${banned ? 'border-red-500/30 bg-red-500/5' : 'border-border bg-background'}`}>
       {/* Main row */}
-      <div className="flex items-center gap-3 p-3">
-        <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center text-xl flex-shrink-0">
-          {user.profileIcon || <span className="text-primary font-black text-sm">{user.username[0]?.toUpperCase()}</span>}
+      <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => setProfileOpen(v => !v)}>
+        <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">
+          {user.profileImage ? (
+            <img src={user.profileImage} alt={user.username} className="w-full h-full object-cover" />
+          ) : user.profileIcon ? (
+            user.profileIcon
+          ) : (
+            <span className="text-primary font-black text-sm">{user.username[0]?.toUpperCase()}</span>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -101,13 +108,45 @@ function PlayerRow({ user, currentUserId }: { user: User; currentUserId: string 
 
         {!isSelf && (
           <button
-            onClick={() => setOpen(v => !v)}
+            onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
             className="flex-shrink-0 flex items-center gap-1 text-xs font-bold text-muted-foreground hover:text-foreground border border-border rounded-lg px-2 py-1 hover:border-primary/40 transition-colors"
           >
             Manage {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </button>
         )}
       </div>
+
+      {/* Profile panel */}
+      {profileOpen && (
+        <div className="border-t border-border p-3">
+          {user.bannerImage ? (
+            <div className="h-24 rounded-xl bg-cover bg-center mb-4" style={{ backgroundImage: `url(${user.bannerImage})` }} />
+          ) : (
+            <div className="h-24 rounded-xl bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 mb-4" />
+          )}
+          <div className="flex items-end gap-3 -mt-10 mb-3">
+            <div className="relative">
+              {user.profileImage ? (
+                <img src={user.profileImage} alt={user.username} className="w-16 h-16 rounded-full object-cover border-4 border-[#111]" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-xl font-black border-4 border-[#111]">
+                  {user.profileIcon || user.username[0]?.toUpperCase()}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-bold text-sm">{user.username}</span>
+            <RolePill role={user.role} />
+            {user.isAdmin && (
+              <span className="inline-flex items-center text-[10px] font-black px-2 py-0.5 rounded-full border text-amber-400 bg-amber-500/10 border-amber-500/30">
+                <Shield className="w-2.5 h-2.5 mr-0.5" /> Admin
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">{user.bio || 'No bio set.'}</p>
+        </div>
+      )}
 
       {/* Manage panel */}
       {open && !isSelf && (
